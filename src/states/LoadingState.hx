@@ -48,6 +48,7 @@ class LoadingState extends FlxState
         statusText.color = 0xFFFFFFFF;
         statusText.scale.set(1, 1);
         statusText.x = (FlxG.width - statusText.width * statusText.scale.x) / 2;
+		statusText.y = progressBar.y + progressBar.height + 4;
         add(statusText);
 
         runNextStep();
