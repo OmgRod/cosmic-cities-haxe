@@ -1,19 +1,20 @@
 package states;
 
+#if cpp
 import cpp.ConstCharStar;
 import cpp.Function;
 import cpp.RawConstPointer;
 import cpp.RawPointer;
+import hxdiscord_rpc.Discord;
+import hxdiscord_rpc.Types;
+#end
 import flixel.FlxG;
 import flixel.FlxState;
 import flixel.graphics.frames.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
 import flixel.ui.FlxBar;
-import hxdiscord_rpc.Discord;
-import hxdiscord_rpc.Types;
 import openfl.Assets;
-import states.MainMenu;
-import sys.thread.Thread;
+import states.MainMenuState;
 import ui.backgrounds.Starfield;
 
 class LoadingState extends FlxState
@@ -72,10 +73,7 @@ class LoadingState extends FlxState
 
             case 2:
                 updateStatus("Loading assets...");
-                loadingStep++;
-                Thread.create(() -> {
-                    Sys.sleep(10);
-                });
+				loadingStep++;
                 runNextStep();
 
             case 3:
@@ -91,7 +89,7 @@ class LoadingState extends FlxState
             case 5:
                 updateStatus("Done!");
                 progressBar.value = 4;
-                FlxG.switchState(() -> new MainMenu());
+				FlxG.switchState(() -> new MainMenuState());
         }
 
         progressBar.value = loadingStep;
@@ -105,26 +103,18 @@ class LoadingState extends FlxState
 
     function initDiscordRpc(done:Void->Void):Void
     {
+		#if cpp
         final handlers:DiscordEventHandlers = new DiscordEventHandlers();
         handlers.ready = Function.fromStaticFunction(onReady);
         handlers.disconnected = Function.fromStaticFunction(onDisconnected);
         handlers.errored = Function.fromStaticFunction(onError);
-        Discord.Initialize("1392251941349757110", RawPointer.addressOf(handlers), false, null);
-
-        Thread.create(() -> {
-            while (loadingStep == 1)
-            {
-                #if DISCORD_DISABLE_IO_THREAD
-                Discord.UpdateConnection();
-                #end
-                Discord.RunCallbacks();
-                Sys.sleep(2);
-            }
-        });
+		Discord.Initialize("1392251941349757110", RawPointer.addressOf(handlers), false, null);
+		#end
 
         done();
     }
 
+	#if cpp
     static function onReady(request:RawConstPointer<DiscordUser>):Void
     {
         final discordPresence = new DiscordRichPresence();
@@ -144,4 +134,5 @@ class LoadingState extends FlxState
     {
         Sys.println('Discord RPC: Error ($errorCode:$message)');
     }
+	#end
 }

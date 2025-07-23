@@ -1,38 +1,66 @@
 package states;
 
+#if cpp
+import Sys;
 import cpp.ConstCharStar;
 import cpp.Function;
 import cpp.RawConstPointer;
 import cpp.RawPointer;
+import hxdiscord_rpc.Discord;
+import hxdiscord_rpc.Types;
+#end
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.group.FlxGroup;
-import flixel.math.FlxPoint;
 import flixel.sound.FlxSound;
 import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
 import flixel.ui.FlxButton;
-import hxdiscord_rpc.Discord;
-import hxdiscord_rpc.Types;
+import manager.MusicManager;
 import openfl.Assets;
+import states.GameState;
 import ui.backgrounds.Starfield;
 
-class MainMenu extends FlxState
+class MainMenuState extends FlxState
 {
 	var font:FlxBitmapFont;
+	var buttonCallbacks:Map<String,Void->Void>;
 
 	override public function create()
 	{
 		super.create();
 
+		buttonCallbacks = new Map();
+
+		buttonCallbacks.set("Start", () ->
+		{
+			// trace("Start pressed");
+			FlxG.switchState(() -> new GameState());
+		});
+
+		buttonCallbacks.set("Options", () ->
+		{
+			// trace("Options pressed");
+		});
+
+		buttonCallbacks.set("Credits", () ->
+		{
+			// trace("Credits pressed");
+		});
+
+		#if cpp
+		buttonCallbacks.set("Exit", () ->
+		{
+			// trace("Exit pressed");
+			Sys.exit(0);
+		});
+		#end
+
 		var starfield = new Starfield();
 		add(starfield);
 
-		var music = new FlxSound();
-		music.loadStream("assets/sounds/music.intro.wav", true);
-		music.play();
-		FlxG.sound.list.add(music);
+		MusicManager.playIntroMusic();
 
 		var vw = FlxG.width;
 		var vh = FlxG.height;
@@ -67,7 +95,10 @@ class MainMenu extends FlxState
 		add(buttonGroup);
 		add(textGroup);
 
-		var buttonLabels = ["Start", "Options", "Credits", "Exit"];
+		var buttonLabels = ["Start", "Options", "Credits"];
+		#if cpp
+		buttonLabels.push("Exit");
+		#end
 		var buttonWidth = 150;
 		var buttonHeight = 40;
 		var buttonSpacing = 10;
@@ -105,12 +136,23 @@ class MainMenu extends FlxState
 			{
 				txt.color = 0xFFFFFF00;
 				trace('$label clicked');
+
+				var callback = buttonCallbacks.get(label);
+				var sfx = new FlxSound();
+				sfx.loadEmbedded("assets/sounds/sfx.blip." + (1 + Std.random(5)) + ".wav");
+				if (sfx != null)
+					sfx.volume = 2;
+					sfx.play();
+
+				if (callback != null)
+					callback();
 			};
 
 			buttonGroup.add(btn);
 			textGroup.add(txt);
 		}
 
+		#if cpp
 		final discordPresence = new DiscordRichPresence();
 		discordPresence.largeImageText = "Cosmic Cities";
 		discordPresence.details = "Browsing menus...";
@@ -118,6 +160,7 @@ class MainMenu extends FlxState
 		discordPresence.largeImageKey = "logo";
 
 		Discord.UpdatePresence(RawConstPointer.addressOf(discordPresence));
+		#end
 	}
 
 	override public function update(dt:Float):Void
