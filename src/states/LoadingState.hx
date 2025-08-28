@@ -1,5 +1,15 @@
 package states;
 
+import firetongue.FireTongue;
+import flixel.FlxG;
+import flixel.FlxState;
+import flixel.text.FlxBitmapText;
+import flixel.ui.FlxBar;
+import manager.MusicManager;
+import openfl.Assets;
+import states.MainMenuState;
+import ui.backgrounds.Starfield;
+import utils.BMFont;
 #if cpp
 import cpp.ConstCharStar;
 import cpp.Function;
@@ -8,23 +18,14 @@ import cpp.RawPointer;
 import hxdiscord_rpc.Discord;
 import hxdiscord_rpc.Types;
 #end
-import flixel.FlxG;
-import flixel.FlxState;
-import flixel.graphics.frames.FlxBitmapFont;
-import flixel.text.FlxBitmapText;
-import flixel.ui.FlxBar;
-import openfl.Assets;
-import states.MainMenuState;
-import ui.backgrounds.Starfield;
 
 class LoadingState extends FlxState
 {
     var progressBar:FlxBar;
     var loadingStep:Int = 0;
-    var statusText:FlxBitmapText;
-    var font:FlxBitmapFont;
+	var statusText:FlxBitmapText;
 
-    override public function create():Void
+	override public function create()
     {
         super.create();
 
@@ -36,22 +37,15 @@ class LoadingState extends FlxState
         progressBar.value = 0;
         add(progressBar);
 
-        var fontBitmap = Assets.getBitmapData("assets/fonts/pixel_operator.png");
-        var fontData = Assets.getText("assets/fonts/pixel_operator.fnt");
-
-        font = FlxBitmapFont.fromAngelCode(fontBitmap, fontData);
-        if (font == null)
-        {
-            throw "Failed to load bitmap font assets!";
-        }
+		var font = new BMFont("assets/fonts/pixel_operator.fnt", "assets/fonts/pixel_operator.png").getFont();
 
         statusText = new FlxBitmapText(0, 0, "", font);
         statusText.color = 0xFFFFFFFF;
         statusText.scale.set(1, 1);
         statusText.x = (FlxG.width - statusText.width * statusText.scale.x) / 2;
 		statusText.y = progressBar.y + progressBar.height + 4;
-        add(statusText);
-
+		add(statusText);
+        
         runNextStep();
     }
 
@@ -59,35 +53,38 @@ class LoadingState extends FlxState
     {
         switch (loadingStep)
         {
-            case 0:
-                updateStatus("Initializing...");
-                loadingStep++;
-                runNextStep();
+			case 0:
+				updateStatus(Main.tongue.get("$LOADING_INIT_DC_RPC", "ui"));
+				initDiscordRpc(() ->
+				{
+					loadingStep++;
+					runNextStep();
+				});
 
-            case 1:
-                updateStatus("Initializing Discord RPC...");
-                initDiscordRpc(() -> {
-                    loadingStep++;
-                    runNextStep();
-                });
+			case 1:
+				updateStatus(Main.tongue.get("$LOADING_LD_ASSETS", "ui"));
+				MusicManager.load("intro", "assets/sounds/music.intro.wav", true);
+				MusicManager.load("intro.old", "assets/sounds/music.intro.old.wav", true);
 
-            case 2:
-                updateStatus("Loading assets...");
 				loadingStep++;
                 runNextStep();
 
-            case 3:
-                updateStatus("Loading data...");
-                loadingStep++;
-                runNextStep();
+			// case 2:
+			//     updateStatus("Loading data...");
+			// 	Assets.getText("assets/maps/ship-main.tmx");
+			// 	Assets.getText("assets/maps/ship-cockpit.tmx");
+			// 	Assets.getText("assets/maps/ship-stairs.tmx");
+			// 	Assets.getText("assets/maps/ship-topfloor.tmx");
+			//     loadingStep++;
+			//     runNextStep();
 
-            case 4:
-                updateStatus("Finalizing...");
-                loadingStep++;
-                runNextStep();
+			// case 3:
+			//     updateStatus("Finalizing...");
+			//     loadingStep++;
+			//     runNextStep();
 
-            case 5:
-                updateStatus("Done!");
+			case 2: // 4
+				updateStatus(Main.tongue.get("$LOADING_DONE", "ui"));
                 progressBar.value = 4;
 				FlxG.switchState(() -> new MainMenuState());
         }

@@ -18,9 +18,12 @@ import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
 import flixel.ui.FlxButton;
 import manager.MusicManager;
-import openfl.Assets;
+import states.CreditsState;
 import states.GameState;
+import states.OptionsState;
 import ui.backgrounds.Starfield;
+import ui.style.ButtonStyle;
+import utils.BMFont;
 
 class MainMenuState extends FlxState
 {
@@ -35,24 +38,22 @@ class MainMenuState extends FlxState
 
 		buttonCallbacks.set("Start", () ->
 		{
-			// trace("Start pressed");
 			FlxG.switchState(() -> new GameState());
 		});
 
 		buttonCallbacks.set("Options", () ->
 		{
-			// trace("Options pressed");
+			FlxG.switchState(() -> new OptionsState());
 		});
 
 		buttonCallbacks.set("Credits", () ->
 		{
-			// trace("Credits pressed");
+			FlxG.switchState(() -> new CreditsState());
 		});
 
 		#if cpp
 		buttonCallbacks.set("Exit", () ->
 		{
-			// trace("Exit pressed");
 			Sys.exit(0);
 		});
 		#end
@@ -60,7 +61,7 @@ class MainMenuState extends FlxState
 		var starfield = new Starfield();
 		add(starfield);
 
-		MusicManager.playIntroMusic();
+		MusicManager.play("intro");
 
 		var vw = FlxG.width;
 		var vh = FlxG.height;
@@ -74,15 +75,9 @@ class MainMenuState extends FlxState
 		logo.y = vh * 0.15;
 		add(logo);
 
-		var fontBitmap = Assets.getBitmapData("assets/fonts/pixel_operator.png");
-		var fontData = Assets.getText("assets/fonts/pixel_operator.fnt");
-		font = FlxBitmapFont.fromAngelCode(fontBitmap, fontData);
-		if (font == null)
-		{
-			throw "Failed to load bitmap font assets!";
-		}
+		var font = new BMFont("assets/fonts/pixel_operator.fnt", "assets/fonts/pixel_operator.png").getFont();
 
-		var copyrightText = new FlxBitmapText(0, 0, "© OmgRod 2025 - All Rights Reserved", font);
+		var copyrightText = new FlxBitmapText(0, 0, Main.tongue.get("$COPYRIGHT_NOTICE", "ui"), font);
 		copyrightText.color = 0xFFFFFFFF;
 		copyrightText.scale.set(0.65, 0.65);
 		copyrightText.updateHitbox();
@@ -95,10 +90,15 @@ class MainMenuState extends FlxState
 		add(buttonGroup);
 		add(textGroup);
 
-		var buttonLabels = ["Start", "Options", "Credits"];
+		var buttonLabels = [
+			Main.tongue.get("$MENU_START_BUTTON", "ui"),
+			Main.tongue.get("$MENU_OPTIONS_BUTTON", "ui"),
+			Main.tongue.get("$MENU_CREDITS_BUTTON", "ui")
+		];
 		#if cpp
-		buttonLabels.push("Exit");
+		buttonLabels.push(Main.tongue.get("$MENU_EXIT_BUTTON", "ui"));
 		#end
+
 		var buttonWidth = 150;
 		var buttonHeight = 40;
 		var buttonSpacing = 10;
@@ -113,10 +113,9 @@ class MainMenuState extends FlxState
 			var label = buttonLabels[i];
 
 			var btn = new FlxButton(0, 0, "");
-			var bg = new FlxSprite();
-			bg.makeGraphic(buttonWidth, buttonHeight, 0x00FFFFFF);
-			btn.loadGraphic(bg.pixels, true, buttonWidth, buttonHeight);
-			btn.label.visible = false;
+			btn.width = buttonWidth;
+			btn.height = buttonHeight;
+			ButtonStyle.apply(btn, ButtonStyleType.NoBackground);
 
 			btn.x = startX;
 			btn.y = startY + i * (buttonHeight + buttonSpacing);
@@ -126,16 +125,14 @@ class MainMenuState extends FlxState
 			txt.color = 0xFFFFFFFF;
 			txt.updateHitbox();
 
-			txt.x = btn.x + (buttonWidth - txt.width * txt.scale.x) / 2;
-			txt.y = btn.y + (buttonHeight - txt.height * txt.scale.y) / 2;
+			txt.x = btn.x + (buttonWidth - txt.textWidth * txt.scale.x) / 2;
+			txt.y = btn.y + (buttonHeight - txt.textHeight * txt.scale.y) / 2;
 
-			btn.onOver.callback = () -> txt.color = 0xFFFFFF00;
-			btn.onOut.callback = () -> txt.color = 0xFFFFFFFF;
-			btn.onDown.callback = () -> txt.color = 0xFFA0A000;
+			ButtonStyle.apply(btn, ButtonStyleType.YellowHover(txt));
+
 			btn.onUp.callback = () ->
 			{
 				txt.color = 0xFFFFFF00;
-				trace('$label clicked');
 
 				var callback = buttonCallbacks.get(label);
 				var sfx = new FlxSound();

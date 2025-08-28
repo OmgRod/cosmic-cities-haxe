@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data>
+    <!-- Files to load -->
+    <file id="ui" value="ui.csv"/>
+    <file id="fonts" value="fonts.xml"/>
+
+    <!-- American English -->
+    <locale id="en-US" is_default="true" sort="0">
+        <contributors value="OmgRod"/>
+        <ui language="Language" region="Region" accept="Okay"/>
+        <label id="en-US" language="English" region="United States"/>
+    </locale>
+
+    <!-- Portuguese -->
+    <locale id="pt-PT" sort="1">
+        <contributors value="OmgRod"/>
+        <ui language="Idioma" region="Região" accept="OK"/>
+        <label id="pt-PT" language="Português" region="Portugal"/>
+    </locale>
+</data>

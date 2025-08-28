@@ -8,13 +8,13 @@ import ui.backgrounds.Starfield;
 
 class GameState extends FlxState
 {
-    override public function create():Void
+	override public function create()
     {
         super.create();
 
         var starfield = new Starfield();
         add(starfield);
 
-        MusicManager.stopMusic();
+		MusicManager.stop("intro");
     }
 }

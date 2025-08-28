@@ -50,6 +50,7 @@
 	<haxelib name="hxdiscord_rpc" />
 	<haxelib name="ase" />
 	<haxelib name="actuate" />
+	<haxelib name="polymod" />
 	
 	<!-- ______________________________ Haxedefines _____________________________ -->
 	
