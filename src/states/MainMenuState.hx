@@ -2,10 +2,7 @@ package states;
 
 #if cpp
 import Sys;
-import cpp.ConstCharStar;
-import cpp.Function;
 import cpp.RawConstPointer;
-import cpp.RawPointer;
 import hxdiscord_rpc.Discord;
 import hxdiscord_rpc.Types;
 #end
@@ -28,34 +25,19 @@ import utils.BMFont;
 class MainMenuState extends FlxState
 {
 	var font:FlxBitmapFont;
-	var buttonCallbacks:Map<String,Void->Void>;
+	var buttonCallbacks:Map<String, Void->Void>;
 
 	override public function create()
 	{
 		super.create();
 
 		buttonCallbacks = new Map();
-
-		buttonCallbacks.set("Start", () ->
-		{
-			FlxG.switchState(() -> new GameState());
-		});
-
-		buttonCallbacks.set("Options", () ->
-		{
-			FlxG.switchState(() -> new OptionsState());
-		});
-
-		buttonCallbacks.set("Credits", () ->
-		{
-			FlxG.switchState(() -> new CreditsState());
-		});
+		buttonCallbacks.set("start", () -> FlxG.switchState(() -> new GameState()));
+		buttonCallbacks.set("options", () -> FlxG.switchState(() -> new OptionsState()));
+		buttonCallbacks.set("credits", () -> FlxG.switchState(() -> new CreditsState()));
 
 		#if cpp
-		buttonCallbacks.set("Exit", () ->
-		{
-			Sys.exit(0);
-		});
+		buttonCallbacks.set("exit", () -> Sys.exit(0));
 		#end
 
 		var starfield = new Starfield();
@@ -75,7 +57,7 @@ class MainMenuState extends FlxState
 		logo.y = vh * 0.15;
 		add(logo);
 
-		var font = new BMFont("assets/fonts/pixel_operator.fnt", "assets/fonts/pixel_operator.png").getFont();
+		font = new BMFont("assets/fonts/pixel_operator.fnt", "assets/fonts/pixel_operator.png").getFont();
 
 		var copyrightText = new FlxBitmapText(0, 0, Main.tongue.get("$COPYRIGHT_NOTICE", "ui"), font);
 		copyrightText.color = 0xFFFFFFFF;
@@ -90,27 +72,27 @@ class MainMenuState extends FlxState
 		add(buttonGroup);
 		add(textGroup);
 
-		var buttonLabels = [
-			Main.tongue.get("$MENU_START_BUTTON", "ui"),
-			Main.tongue.get("$MENU_OPTIONS_BUTTON", "ui"),
-			Main.tongue.get("$MENU_CREDITS_BUTTON", "ui")
+		var buttons = [
+			{id: "start", label: Main.tongue.get("$MENU_START_BUTTON", "ui")},
+			{id: "options", label: Main.tongue.get("$MENU_OPTIONS_BUTTON", "ui")},
+			{id: "credits", label: Main.tongue.get("$MENU_CREDITS_BUTTON", "ui")}
 		];
+
 		#if cpp
-		buttonLabels.push(Main.tongue.get("$MENU_EXIT_BUTTON", "ui"));
+		buttons.push({id: "exit", label: Main.tongue.get("$MENU_EXIT_BUTTON", "ui")});
 		#end
 
 		var buttonWidth = 150;
 		var buttonHeight = 40;
 		var buttonSpacing = 10;
-
-		var totalHeight = buttonLabels.length * buttonHeight + (buttonLabels.length - 1) * buttonSpacing;
+		var totalHeight = buttons.length * buttonHeight + (buttons.length - 1) * buttonSpacing;
 		var startX = (FlxG.width - buttonWidth) / 2;
 		var availableHeight = copyrightText.y - (logo.y + logo.height);
 		var startY = logo.y + logo.height + (availableHeight - totalHeight) / 2;
 
-		for (i in 0...buttonLabels.length)
+		for (i in 0...buttons.length)
 		{
-			var label = buttonLabels[i];
+			var btnData = buttons[i];
 
 			var btn = new FlxButton(0, 0, "");
 			btn.width = buttonWidth;
@@ -120,7 +102,7 @@ class MainMenuState extends FlxState
 			btn.x = startX;
 			btn.y = startY + i * (buttonHeight + buttonSpacing);
 
-			var txt = new FlxBitmapText(0, 0, label, font);
+			var txt = new FlxBitmapText(0, 0, btnData.label, font);
 			txt.scale.set(1.2, 1.2);
 			txt.color = 0xFFFFFFFF;
 			txt.updateHitbox();
@@ -134,12 +116,14 @@ class MainMenuState extends FlxState
 			{
 				txt.color = 0xFFFFFF00;
 
-				var callback = buttonCallbacks.get(label);
+				var callback = buttonCallbacks.get(btnData.id);
 				var sfx = new FlxSound();
 				sfx.loadEmbedded("assets/sounds/sfx.blip." + (1 + Std.random(5)) + ".wav");
 				if (sfx != null)
+				{
 					sfx.volume = 2;
 					sfx.play();
+				}
 
 				if (callback != null)
 					callback();
@@ -155,7 +139,6 @@ class MainMenuState extends FlxState
 		discordPresence.details = "Browsing menus...";
 		discordPresence.state = "Main Menu";
 		discordPresence.largeImageKey = "logo";
-
 		Discord.UpdatePresence(RawConstPointer.addressOf(discordPresence));
 		#end
 	}

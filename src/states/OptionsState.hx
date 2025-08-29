@@ -31,14 +31,14 @@ class OptionsState extends FlxState
         var font = new BMFont("assets/fonts/pixel_operator.fnt", "assets/fonts/pixel_operator.png").getFont();
 
         var scaleBig = 1.3;
-        var title = new FlxBitmapText(0, 0, "Options", font);
+		var title = new FlxBitmapText(0, 0, Main.tongue.get("$SETTING_TITLE", "ui"), font);
         title.scale.set(scaleBig, scaleBig);
         title.updateHitbox();
         title.x = Math.floor((FlxG.width - title.frameWidth * scaleBig) / 2);
         title.y = 50;
         add(title);
 
-        var label = new FlxBitmapText(0, 0, "Volume", font);
+		var label = new FlxBitmapText(0, 0, Main.tongue.get("$SETTING_VOLUME", "ui"), font);
         label.scale.set(1.0, 1.0);
         label.updateHitbox();
         label.x = Math.floor((FlxG.width - label.frameWidth) / 2);
@@ -72,7 +72,7 @@ class OptionsState extends FlxState
         backBtn.x = (FlxG.width - backBtn.width) / 2;
         backBtn.y = FlxG.height - backBtn.height - 10;
 
-        var backText = new FlxBitmapText(0, 0, "Back", font);
+		var backText = new FlxBitmapText(0, 0, Main.tongue.get("$GENERAL_BACK", "ui"), font);
         backText.scale.set(1.2, 1.2);
         backText.color = 0xFFFFFFFF;
         backText.updateHitbox();
@@ -145,5 +145,11 @@ class OptionsState extends FlxState
             MusicManager.setGlobalVolume(newVolume);
             volumeText.text = Std.string(Math.round(newVolume * 100)) + "%";
         }
+		static var wasDragging = false;
+		if (wasDragging && !dragging)
+		{
+            // make the save thing here
+		}
+		wasDragging = dragging;
     }
 }
