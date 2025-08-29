@@ -2,6 +2,7 @@
 <data>
     <!-- Files to load -->
     <file id="ui" value="ui.csv"/>
+    <file id="dialog" value="dialog.csv"/>
     <file id="fonts" value="fonts.xml"/>
 
     <!-- American English -->
@@ -11,10 +12,74 @@
         <label id="en-US" language="English" region="United States"/>
     </locale>
 
-    <!-- Portuguese -->
+    <!-- British English -->
+    <locale id="en-GB" is_default="true" sort="0">
+        <contributors value="OmgRod"/>
+        <ui language="Language" region="Region" accept="Okay"/>
+        <label id="en-GB" language="English" region="United Kingdom"/>
+    </locale>
+
+    <!-- Portuguese (Portugal) -->
     <locale id="pt-PT" sort="1">
         <contributors value="OmgRod"/>
         <ui language="Idioma" region="Região" accept="OK"/>
         <label id="pt-PT" language="Português" region="Portugal"/>
     </locale>
+
+    <!-- Spanish (Spain) -->
+    <locale id="es-ES" sort="2">
+        <contributors value=""/>
+        <ui language="Idioma" region="Región" accept="Aceptar"/>
+        <label id="es-ES" language="Español" region="España"/>
+    </locale>
+
+    <!-- French (France) -->
+    <locale id="fr-FR" sort="3">
+        <contributors value=""/>
+        <ui language="Langue" region="Région" accept="OK"/>
+        <label id="fr-FR" language="Français" region="France"/>
+    </locale>
+
+    <!-- German (Germany) -->
+    <locale id="de-DE" sort="4">
+        <contributors value=""/>
+        <ui language="Sprache" region="Region" accept="OK"/>
+        <label id="de-DE" language="Deutsch" region="Deutschland"/>
+    </locale>
+
+    <!-- Portuguese (Brazil) -->
+    <locale id="pt-BR" sort="5">
+        <contributors value=""/>
+        <ui language="Idioma" region="Região" accept="OK"/>
+        <label id="pt-BR" language="Português" region="Brasil"/>
+    </locale>
+
+    <!-- Japanese -->
+    <!-- <locale id="ja-JP" sort="6">
+        <contributors value=""/>
+        <ui language="言語" region="地域" accept="OK"/>
+        <label id="ja-JP" language="日本語" region="日本"/>
+    </locale> -->
+
+    <!-- Korean -->
+    <!-- <locale id="ko-KR" sort="7">
+        <contributors value=""/>
+        <ui language="언어" region="지역" accept="확인"/>
+        <label id="ko-KR" language="한국어" region="대한민국"/>
+    </locale> -->
+
+    <!-- Chinese (Simplified, China) -->
+    <!-- <locale id="zh-CN" sort="8">
+        <contributors value=""/>
+        <ui language="语言" region="地区" accept="确定"/>
+        <label id="zh-CN" language="中文" region="中国"/>
+    </locale> -->
+
+    <!-- Russian -->
+    <!-- <locale id="ru-RU" sort="9">
+        <contributors value=""/>
+        <ui language="Язык" region="Регион" accept="OK"/>
+        <label id="ru-RU" language="Русский" region="Россия"/>
+    </locale> -->
+
 </data>
