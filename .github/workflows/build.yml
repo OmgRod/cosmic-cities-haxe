@@ -1,0 +1,119 @@
+name: Build Cosmic Cities
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        command: [
+          "lime build windows -cpp",
+          "lime build html5",
+          "lime build android"
+        ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: "4.3.7"
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install flixel-ui
+          haxelib install firetongue
+          haxelib install nape-haxe4
+          haxelib install hxdiscord_rpc
+          haxelib install ase
+          haxelib install actuate
+          haxelib install polymod
+
+      - name: Run build
+        run: ${{ matrix.command }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.command }}
+          path: |
+            export/android/bin
+            export/html5/bin
+            export/windows/bin
+
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: "4.3.7"
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install flixel-ui
+          haxelib install firetongue
+          haxelib install nape-haxe4
+          haxelib install hxdiscord_rpc
+          haxelib install ase
+          haxelib install actuate
+          haxelib install polymod
+
+      - name: Build Linux
+        run: lime build linux -cpp
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-linux
+          path: export/neko/bin
+
+  build_macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        command: [
+          "lime build mac -cpp",
+          "lime build ios"
+        ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: "4.3.7"
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install flixel-ui
+          haxelib install firetongue
+          haxelib install nape-haxe4
+          haxelib install hxdiscord_rpc
+          haxelib install ase
+          haxelib install actuate
+          haxelib install polymod
+
+      - name: Run build
+        run: ${{ matrix.command }}
+
+      - name: Upload macOS/iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.command }}
+          path: |
+            export/ios/CosmicCities
+            export/neko/bin
