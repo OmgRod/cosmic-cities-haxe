@@ -37,7 +37,8 @@ class LoadingState extends FlxState
         progressBar.value = 0;
         add(progressBar);
 
-		var font = new BMFont("assets/fonts/pixel_operator.fnt", "assets/fonts/pixel_operator.png").getFont();
+		var fontString = Main.tongue.getFontData("pixel_operator", 16).name;
+		var font = new BMFont("assets/fonts/" + fontString + "/" + fontString + ".fnt", "assets/fonts/" + fontString + "/" + fontString + ".png").getFont();
 
         statusText = new FlxBitmapText(0, 0, "", font);
         statusText.color = 0xFFFFFFFF;

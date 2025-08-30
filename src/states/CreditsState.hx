@@ -16,7 +16,8 @@ class CreditsState extends FlxState
         var starfield = new Starfield();
         add(starfield);
 
-		var font = new BMFont("assets/fonts/pixel_operator.fnt", "assets/fonts/pixel_operator.png").getFont();
+		var fontString = Main.tongue.getFontData("pixel_operator", 16).name;
+		var font = new BMFont("assets/fonts/" + fontString + "/" + fontString + ".fnt", "assets/fonts/" + fontString + "/" + fontString + ".png").getFont();
 
 		var scaleBig = 1.3;
 		var title = new FlxBitmapText(0, 0, Main.tongue.get("$CREDITS_TITLE", "ui"), font);

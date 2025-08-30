@@ -55,7 +55,8 @@ class MainMenuState extends FlxState
 		logo.y = vh * 0.15;
 		add(logo);
 
-		font = new BMFont("assets/fonts/pixel_operator.fnt", "assets/fonts/pixel_operator.png").getFont();
+		var fontString = Main.tongue.getFontData("pixel_operator", 16).name;
+		font = new BMFont("assets/fonts/" + fontString + "/" + fontString + ".fnt", "assets/fonts/" + fontString + "/" + fontString + ".png").getFont();
 
 		var copyrightText = new FlxBitmapText(0, 0, Main.tongue.get("$COPYRIGHT_NOTICE", "ui"), font);
 		copyrightText.color = 0xFFFFFFFF;

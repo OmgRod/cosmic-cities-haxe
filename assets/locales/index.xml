@@ -55,31 +55,30 @@
     </locale>
 
     <!-- Japanese -->
-    <!-- <locale id="ja-JP" sort="6">
+    <locale id="ja-JP" sort="6">
         <contributors value=""/>
         <ui language="言語" region="地域" accept="OK"/>
         <label id="ja-JP" language="日本語" region="日本"/>
-    </locale> -->
+    </locale>
 
     <!-- Korean -->
-    <!-- <locale id="ko-KR" sort="7">
+    <locale id="ko-KR" sort="7">
         <contributors value=""/>
         <ui language="언어" region="지역" accept="확인"/>
         <label id="ko-KR" language="한국어" region="대한민국"/>
-    </locale> -->
+    </locale>
 
     <!-- Chinese (Simplified, China) -->
-    <!-- <locale id="zh-CN" sort="8">
+    <locale id="zh-CN" sort="8">
         <contributors value=""/>
         <ui language="语言" region="地区" accept="确定"/>
         <label id="zh-CN" language="中文" region="中国"/>
-    </locale> -->
+    </locale>
 
     <!-- Russian -->
-    <!-- <locale id="ru-RU" sort="9">
+    <locale id="ru-RU" sort="9">
         <contributors value=""/>
         <ui language="Язык" region="Регион" accept="OK"/>
         <label id="ru-RU" language="Русский" region="Россия"/>
-    </locale> -->
-
+    </locale>
 </data>

@@ -14,6 +14,7 @@ import openfl.events.Event;
 import openfl.events.KeyboardEvent;
 import openfl.ui.Keyboard;
 import states.LoadingState;
+import utils.BMFont;
 
 class Main extends Sprite
 {
@@ -45,20 +46,18 @@ class Main extends Sprite
 
 	function setupEscapeQuitText():Void
 	{
-		var fontBitmap = Assets.getBitmapData("assets/fonts/pixel_operator.png");
-		var fontData = Assets.getText("assets/fonts/pixel_operator.fnt");
-		quitFont = FlxBitmapFont.fromAngelCode(fontBitmap, fontData);
+		if (quitText != null && FlxG.state != null)
+			FlxG.state.remove(quitText);
 
-		if (quitFont == null)
-		{
-			throw "Failed to load bitmap font for quitting text!";
-		}
+		var fontString = tongue.getFontData("pixel_operator", 16).name;
+		var font = new BMFont("assets/fonts/" + fontString + "/" + fontString + ".fnt", "assets/fonts/" + fontString + "/" + fontString + ".png").getFont();
 
-		quitText = new FlxBitmapText(5, 5, "", quitFont);
+		quitText = new FlxBitmapText(0, 0, Main.tongue.get("$GENERAL_QUITTING", "ui"), font);
 		quitText.color = FlxColor.WHITE;
 		quitText.scale.set(1, 1);
 		quitText.updateHitbox();
 		quitText.alpha = 0;
+
 		FlxG.state.add(quitText);
 	}
 
@@ -71,6 +70,7 @@ class Main extends Sprite
 			quitDotCount = 0;
 			quitDotTimer = 0;
 			quitting = true;
+			setupEscapeQuitText();
 			if (quitText != null)
 				quitText.alpha = 1;
 		}
@@ -118,7 +118,7 @@ class Main extends Sprite
 				var dots = "";
 				for (i in 0...quitDotCount)
 					dots += ".";
-				quitText.text = "Quitting" + dots;
+				quitText.text = Main.tongue.get("$GENERAL_QUITTING", "ui") + dots;
 				quitText.alpha = Math.min(1, escapeHoldTime * 2);
 			}
 		}
