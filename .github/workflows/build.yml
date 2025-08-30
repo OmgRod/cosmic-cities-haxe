@@ -11,9 +11,14 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Haxe
+
+      - name: Install Haxe
         run: |
-          choco install haxe
+          choco install haxe -y
+          choco install vcredist-all -y
+
+      - name: Install Haxelib Packages
+        run: |
           haxelib install flixel
           haxelib install flixel-addons
           haxelib install flixel-ui
@@ -24,21 +29,27 @@ jobs:
           haxelib install actuate
           haxelib install polymod
           haxelib run lime setup
+
       - name: Build Windows
         run: lime build windows -cpp
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-bin
           path: export/windows/bin
 
-  build-linux-android:
+  build-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Haxe
+
+      - name: Install Haxe
         run: |
           sudo apt update
           sudo apt install -y haxe
+
+      - name: Install Haxelib Packages
+        run: |
           haxelib install flixel
           haxelib install flixel-addons
           haxelib install flixel-ui
@@ -49,8 +60,10 @@ jobs:
           haxelib install actuate
           haxelib install polymod
           haxelib run lime setup
-      - name: Build Linux and Android
-        run: lime build linux -cpp && lime build android
+
+      - name: Build Linux
+        run: lime build linux -cpp
+
       - uses: actions/upload-artifact@v4
         with:
           name: neko-bin
@@ -60,9 +73,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Haxe
+
+      - name: Install Haxe & Packages
         run: |
-          choco install haxe
+          choco install haxe -y
           haxelib install flixel
           haxelib install flixel-addons
           haxelib install flixel-ui
@@ -73,8 +87,10 @@ jobs:
           haxelib install actuate
           haxelib install polymod
           haxelib run lime setup
+
       - name: Build HTML5
         run: lime build html5
+
       - uses: actions/upload-artifact@v4
         with:
           name: html5-bin
@@ -84,7 +100,8 @@ jobs:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Haxe
+
+      - name: Install Haxe & Packages
         run: |
           brew install haxe
           haxelib install flixel
@@ -97,13 +114,59 @@ jobs:
           haxelib install actuate
           haxelib install polymod
           haxelib run lime setup
+
       - name: Build macOS
         run: lime build mac -cpp
+
       - name: Build iOS
         run: lime build ios
+
       - uses: actions/upload-artifact@v4
         with:
           name: ios-macos-bin
           path: |
             export/ios/CosmicCities
             export/neko/bin
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Install Android SDK
+        run: |
+          sudo apt update
+          sudo apt install -y unzip wget
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          mkdir -p $HOME/Android/cmdline-tools
+          unzip cmdline-tools.zip -d $HOME/Android/cmdline-tools
+          yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --licenses
+          $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager "platforms;android-33" "build-tools;33.0.2"
+
+      - name: Install Haxe & Packages
+        run: |
+          sudo apt install -y haxe
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install flixel-ui
+          haxelib install firetongue
+          haxelib install nape-haxe4
+          haxelib install hxdiscord_rpc
+          haxelib install ase
+          haxelib install actuate
+          haxelib install polymod
+          haxelib run lime setup
+
+      - name: Build Android
+        run: lime build android
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-bin
+          path: export/android/bin
