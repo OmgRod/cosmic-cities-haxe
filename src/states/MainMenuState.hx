@@ -10,16 +10,14 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.group.FlxGroup;
-import flixel.sound.FlxSound;
 import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
-import flixel.ui.FlxButton;
 import manager.MusicManager;
 import states.CreditsState;
 import states.GameState;
 import states.OptionsState;
 import ui.backgrounds.Starfield;
-import ui.style.ButtonStyle;
+import ui.menu.TextButton;
 import utils.BMFont;
 
 class MainMenuState extends FlxState
@@ -68,9 +66,7 @@ class MainMenuState extends FlxState
 		add(copyrightText);
 
 		var buttonGroup = new FlxGroup();
-		var textGroup = new FlxGroup();
 		add(buttonGroup);
-		add(textGroup);
 
 		var buttons = [
 			{id: "start", label: Main.tongue.get("$MENU_START_BUTTON", "ui")},
@@ -94,43 +90,16 @@ class MainMenuState extends FlxState
 		{
 			var btnData = buttons[i];
 
-			var btn = new FlxButton(0, 0, "");
-			btn.width = buttonWidth;
-			btn.height = buttonHeight;
-			ButtonStyle.apply(btn, ButtonStyleType.NoBackground);
+			var btn = new TextButton(startX, startY + i * (buttonHeight + buttonSpacing), btnData.label, font, buttonWidth, buttonHeight);
 
-			btn.x = startX;
-			btn.y = startY + i * (buttonHeight + buttonSpacing);
-
-			var txt = new FlxBitmapText(0, 0, btnData.label, font);
-			txt.scale.set(1.2, 1.2);
-			txt.color = 0xFFFFFFFF;
-			txt.updateHitbox();
-
-			txt.x = btn.x + (buttonWidth - txt.textWidth * txt.scale.x) / 2;
-			txt.y = btn.y + (buttonHeight - txt.textHeight * txt.scale.y) / 2;
-
-			ButtonStyle.apply(btn, ButtonStyleType.YellowHover(txt));
-
-			btn.onUp.callback = () ->
+			btn.setCallback(() ->
 			{
-				txt.color = 0xFFFFFF00;
-
 				var callback = buttonCallbacks.get(btnData.id);
-				var sfx = new FlxSound();
-				sfx.loadEmbedded("assets/sounds/sfx.blip." + (1 + Std.random(5)) + ".wav");
-				if (sfx != null)
-				{
-					sfx.volume = 2;
-					sfx.play();
-				}
-
 				if (callback != null)
 					callback();
-			};
+			});
 
 			buttonGroup.add(btn);
-			textGroup.add(txt);
 		}
 
 		#if cpp

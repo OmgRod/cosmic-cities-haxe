@@ -5,11 +5,11 @@ import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.sound.FlxSound;
 import flixel.text.FlxBitmapText;
-import flixel.ui.FlxButton;
 import manager.MusicManager;
+import states.options.LanguageOptionsState;
 import ui.backgrounds.Starfield;
 import ui.menu.SliderKnob;
-import ui.style.ButtonStyle;
+import ui.menu.TextButton;
 import utils.BMFont;
 
 class OptionsState extends FlxState
@@ -64,38 +64,19 @@ class OptionsState extends FlxState
         volumeText.text = Std.string(Math.round(FlxG.sound.volume * 100)) + "%";
         add(volumeText);
 
-        var backBtn = new FlxButton(0, 0, "");
-        backBtn.width = 150;
-        backBtn.height = 40;
-        ButtonStyle.apply(backBtn, ButtonStyleType.NoBackground);
+		var langBtn = new TextButton((FlxG.width - 200) / 2, sliderBar.y + sliderBar.height + 30, Main.tongue.get("$SETTING_LANGUAGES", "ui"), font, 200, 40);
+		langBtn.setCallback(() ->
+		{
+			FlxG.switchState(() -> new LanguageOptionsState());
+		});
+		add(langBtn);
 
-        backBtn.x = (FlxG.width - backBtn.width) / 2;
-        backBtn.y = FlxG.height - backBtn.height - 10;
-
-		var backText = new FlxBitmapText(0, 0, Main.tongue.get("$GENERAL_BACK", "ui"), font);
-        backText.scale.set(1.2, 1.2);
-        backText.color = 0xFFFFFFFF;
-        backText.updateHitbox();
-
-        backText.x = backBtn.x + (backBtn.width - backText.textWidth * backText.scale.x) / 2;
-        backText.y = backBtn.y + (backBtn.height - backText.textHeight * backText.scale.y) / 2;
-
-        ButtonStyle.apply(backBtn, ButtonStyleType.YellowHover(backText));
-
-        backBtn.onUp.callback = () ->
-        {
-            backText.color = 0xFFFFFF00;
-
-            var sfx = new FlxSound();
-            sfx.loadEmbedded("assets/sounds/sfx.blip." + (1 + Std.random(5)) + ".wav");
-            if (sfx != null)
-            {
-                sfx.volume = 2;
-                sfx.play();
-            }
-
+		var backBtn = new TextButton((FlxG.width - 150) / 2, FlxG.height - 50, Main.tongue.get("$GENERAL_BACK", "ui"), font, 150, 40);
+		backBtn.setCallback(() ->
+		{
             FlxG.switchState(() -> new MainMenuState());
-        };
+		});
+		add(backBtn);
 
         var now = Date.now();
         var month = now.getMonth();
@@ -119,9 +100,7 @@ class OptionsState extends FlxState
         sprite.x = FlxG.width - sprite.width - 10;
         sprite.y = FlxG.height - sprite.height - 10;
 
-        add(sprite);
-        add(backBtn);
-        add(backText);
+		add(sprite);
     }
 
     override public function update(elapsed:Float)
@@ -145,6 +124,7 @@ class OptionsState extends FlxState
             MusicManager.setGlobalVolume(newVolume);
             volumeText.text = Std.string(Math.round(newVolume * 100)) + "%";
         }
+
 		static var wasDragging = false;
 		if (wasDragging && !dragging)
 		{
