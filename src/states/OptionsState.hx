@@ -3,7 +3,6 @@ package states;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
-import flixel.sound.FlxSound;
 import flixel.text.FlxBitmapText;
 import manager.MusicManager;
 import states.options.LanguageOptionsState;

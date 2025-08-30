@@ -3,7 +3,6 @@ package ui.backgrounds;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup.FlxTypedGroup;
-import flixel.math.FlxMath;
 import flixel.util.FlxColor;
 
 class Starfield extends FlxTypedGroup<FlxSprite>

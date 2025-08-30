@@ -1,6 +1,5 @@
 package ui.menu;
 
-import flixel.FlxG;
 import flixel.group.FlxGroup;
 import flixel.sound.FlxSound;
 import flixel.text.FlxBitmapText;
@@ -26,7 +25,6 @@ class TextButton extends FlxGroup
         label.color = 0xFFFFFFFF;
         label.updateHitbox();
 
-        // Center label relative to button
         label.x = button.x + (width - label.frameWidth * label.scale.x) / 2;
         label.y = button.y + (height - label.frameHeight * label.scale.y) / 2;
 

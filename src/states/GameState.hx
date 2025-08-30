@@ -1,8 +1,6 @@
 package states;
 
-import flixel.FlxG;
 import flixel.FlxState;
-import haxe.io.Path;
 import manager.MusicManager;
 import ui.backgrounds.Starfield;
 

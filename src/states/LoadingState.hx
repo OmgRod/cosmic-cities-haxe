@@ -1,12 +1,10 @@
 package states;
 
-import firetongue.FireTongue;
 import flixel.FlxG;
 import flixel.FlxState;
 import flixel.text.FlxBitmapText;
 import flixel.ui.FlxBar;
 import manager.MusicManager;
-import openfl.Assets;
 import states.MainMenuState;
 import ui.backgrounds.Starfield;
 import utils.BMFont;

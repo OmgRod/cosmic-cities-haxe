@@ -94,6 +94,7 @@ class Main extends Sprite
 	{
 		var dt = FlxG.elapsed;
 
+		#if cpp
 		if (escapeHeld)
 		{
 			escapeHoldTime += dt;
@@ -108,9 +109,7 @@ class Main extends Sprite
 
 			if (quitDotCount == 4)
 			{
-				#if cpp
 				Sys.exit(0);
-				#end
 			}
 
 			if (quitText != null)
@@ -122,5 +121,6 @@ class Main extends Sprite
 				quitText.alpha = Math.min(1, escapeHoldTime * 2);
 			}
 		}
+		#end
 	}
 }

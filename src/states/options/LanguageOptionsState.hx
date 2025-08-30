@@ -1,6 +1,5 @@
 package states.options;
 
-import firetongue.FireTongue;
 import flixel.FlxG;
 import flixel.FlxState;
 import flixel.group.FlxGroup;
