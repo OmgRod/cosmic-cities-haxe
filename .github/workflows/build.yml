@@ -2,22 +2,24 @@ name: Build Cosmic Cities
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
+    branches: [main]
 
 jobs:
-  build-windows:
+  build_windows:
+    name: Windows Build
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Install Haxe
-        run: |
-          choco install haxe -y
-          choco install vcredist-all -y
+      - name: Install Haxe via Chocolatey
+        run: choco install haxe --version=4.3.4 -y
 
-      - name: Install Haxelib Packages
+      - name: Setup Haxelib
+        run: haxelib setup C:\haxelib
+
+      - name: Install Haxelib packages
         run: |
           haxelib install flixel
           haxelib install flixel-addons
@@ -28,27 +30,34 @@ jobs:
           haxelib install ase
           haxelib install actuate
           haxelib install polymod
-          haxelib run lime setup
+
+      - name: Install Visual C++ Runtime
+        run: choco install vcredist2019 -y
 
       - name: Build Windows
         run: lime build windows -cpp
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: windows-bin
+          name: windows-build
           path: export/windows/bin
 
-  build-linux:
+  build_linux:
+    name: Linux Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Install Haxe
-        run: |
-          sudo apt update
-          sudo apt install -y haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: '4.3.4'
 
-      - name: Install Haxelib Packages
+      - name: Setup Haxelib
+        run: echo "$HOME/haxelib" | haxelib setup
+
+      - name: Install Haxelib packages
         run: |
           haxelib install flixel
           haxelib install flixel-addons
@@ -59,51 +68,32 @@ jobs:
           haxelib install ase
           haxelib install actuate
           haxelib install polymod
-          haxelib run lime setup
 
       - name: Build Linux
         run: lime build linux -cpp
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: neko-bin
+          name: linux-build
           path: export/neko/bin
 
-  build-html5:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Haxe & Packages
-        run: |
-          choco install haxe -y
-          haxelib install flixel
-          haxelib install flixel-addons
-          haxelib install flixel-ui
-          haxelib install firetongue
-          haxelib install nape-haxe4
-          haxelib install hxdiscord_rpc
-          haxelib install ase
-          haxelib install actuate
-          haxelib install polymod
-          haxelib run lime setup
-
-      - name: Build HTML5
-        run: lime build html5
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: html5-bin
-          path: export/html5/bin
-
-  build-macos-ios:
+  build_mac:
+    name: macOS Build
     runs-on: macos-11
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Install Haxe & Packages
+      - name: Install Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: '4.3.4'
+
+      - name: Setup Haxelib
+        run: echo "$HOME/haxelib" | haxelib setup
+
+      - name: Install Haxelib packages
         run: |
-          brew install haxe
           haxelib install flixel
           haxelib install flixel-addons
           haxelib install flixel-ui
@@ -113,7 +103,6 @@ jobs:
           haxelib install ase
           haxelib install actuate
           haxelib install polymod
-          haxelib run lime setup
 
       - name: Build macOS
         run: lime build mac -cpp
@@ -121,37 +110,28 @@ jobs:
       - name: Build iOS
         run: lime build ios
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload macOS & iOS Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: ios-macos-bin
+          name: mac_ios-build
           path: |
             export/ios/CosmicCities
             export/neko/bin
 
-  build-android:
-    runs-on: ubuntu-latest
+  build_html5:
+    name: HTML5 Build
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: 11
+      - name: Install Haxe via Chocolatey
+        run: choco install haxe --version=4.3.4 -y
 
-      - name: Install Android SDK
+      - name: Setup Haxelib
+        run: haxelib setup C:\haxelib
+
+      - name: Install Haxelib packages
         run: |
-          sudo apt update
-          sudo apt install -y unzip wget
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          mkdir -p $HOME/Android/cmdline-tools
-          unzip cmdline-tools.zip -d $HOME/Android/cmdline-tools
-          yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --licenses
-          $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager "platforms;android-33" "build-tools;33.0.2"
-
-      - name: Install Haxe & Packages
-        run: |
-          sudo apt install -y haxe
           haxelib install flixel
           haxelib install flixel-addons
           haxelib install flixel-ui
@@ -161,12 +141,58 @@ jobs:
           haxelib install ase
           haxelib install actuate
           haxelib install polymod
-          haxelib run lime setup
+
+      - name: Build HTML5
+        run: lime build html5
+
+      - name: Upload HTML5 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: html5-build
+          path: export/html5/bin
+
+  build_android:
+    name: Android Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: '4.3.4'
+
+      - name: Setup Haxelib
+        run: echo "$HOME/haxelib" | haxelib setup
+
+      - name: Install Haxelib packages
+        run: |
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install flixel-ui
+          haxelib install firetongue
+          haxelib install nape-haxe4
+          haxelib install hxdiscord_rpc
+          haxelib install ase
+          haxelib install actuate
+          haxelib install polymod
+
+      - name: Install Android SDK
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          script: echo "Android SDK installed"
+
+      - name: Set Android SDK Path
+        run: echo "ANDROID_SDK_ROOT=$HOME/Android/Sdk" >> $GITHUB_ENV
 
       - name: Build Android
         run: lime build android
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: android-bin
+          name: android-build
           path: export/android/bin
