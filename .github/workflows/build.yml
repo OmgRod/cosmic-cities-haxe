@@ -80,7 +80,7 @@ jobs:
           path: export/neko/bin
 
   build_macos:
-    runs-on: macos-latest
+    runs-on: macos-11
     strategy:
       matrix:
         command: [
