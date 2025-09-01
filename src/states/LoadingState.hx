@@ -13,6 +13,8 @@ import cpp.ConstCharStar;
 import cpp.Function;
 import cpp.RawConstPointer;
 import cpp.RawPointer;
+// import discord.CDiscord;
+// import discord.Discord;
 import hxdiscord_rpc.Discord;
 import hxdiscord_rpc.Types;
 #end
@@ -105,6 +107,7 @@ class LoadingState extends FlxState
         handlers.disconnected = Function.fromStaticFunction(onDisconnected);
         handlers.errored = Function.fromStaticFunction(onError);
 		Discord.Initialize("1392251941349757110", RawPointer.addressOf(handlers), false, null);
+		// var client = new Client(new Discord_Client(), DiscordObjectState.Owned);
 		#end
 
         done();

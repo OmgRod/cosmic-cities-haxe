@@ -51,6 +51,7 @@
 	<haxelib name="ase" />
 	<haxelib name="actuate" />
 	<haxelib name="polymod" />
+	<haxelib name="hxcpp" />
 	
 	<!-- ______________________________ Haxedefines _____________________________ -->
 	
@@ -89,5 +90,7 @@
 	<haxedef name="NAPE_RELEASE_BUILD" unless="debug" />
 	
 	<!-- _________________________________ Custom _______________________________ -->
+
+	<cpp include="include/discord" />
 
 </project>
