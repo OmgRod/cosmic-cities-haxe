@@ -32,25 +32,22 @@ class CreditsState extends FlxState
 		creditsGroup = new FlxGroup();
 		add(creditsGroup);
 
-		// Add Cosmic Cities logo to creditsGroup so it scrolls with credits
 		var logo = new flixel.FlxSprite(0, 0, "assets/sprites/CC_titleLogo_001.png");
 		logo.scrollFactor.set(0, 0);
-		// Clamp logo width to max 80% of screen width
 		var maxLogoWidth = FlxG.width * 0.8;
-		var maxLogoHeight = 120; // You can adjust this value for desired max height
+		var maxLogoHeight = 120;
 		var scaleW = maxLogoWidth / logo.width;
 		var scaleH = maxLogoHeight / logo.height;
-		var scale = Math.min(Math.min(scaleW, scaleH), 1.0); // Don't upscale if smaller
+		var scale = Math.min(Math.min(scaleW, scaleH), 1.0);
 		logo.scale.set(scale, scale);
 		logo.updateHitbox();
 		logo.x = (FlxG.width - logo.width) / 2;
-		// Logo should appear first in credits scroll
 		logo.y = 0;
 		creditsGroup.add(logo);
 		itemData.push({item: logo, initialY: 0});
 
-		var sectionSpacing = 48.0; // Increased padding between sections
-		var y = logo.height + 32; // Extra padding after logo
+		var sectionSpacing = 48.0;
+		var y = logo.height + 32;
 
 		inline function addSectionTitle(text:String)
 		{
@@ -126,7 +123,6 @@ class CreditsState extends FlxState
 
 		totalHeight = y;
 
-		// Add skip hint at bottom center, translucent, padded up
 		skipHint = new FlxBitmapText(0, 0, Main.tongue.get("$CREDITS_SKIP_HINT", "ui"), font);
 		skipHint.scale.set(0.9, 0.9);
 		skipHint.updateHitbox();
@@ -146,8 +142,7 @@ class CreditsState extends FlxState
 
 		scrollOffset += scrollSpeed * elapsed;
 		var offsetY = FlxG.height - scrollOffset;
-		
-		// Update all items to their scrolled positions
+
 		for (data in itemData)
 		{
 			if (Std.isOfType(data.item, flixel.FlxSprite))
@@ -164,7 +159,6 @@ class CreditsState extends FlxState
 			}
 		}
 
-		// Only fade out after all credits have fully scrolled off the top
 		if (offsetY + totalHeight < 0)
 			startFadeToMenu();
 		if (FlxG.keys.justPressed.ESCAPE)

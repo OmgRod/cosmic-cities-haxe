@@ -16,6 +16,8 @@ import manager.MusicManager;
 import states.CreditsState;
 import states.GameState;
 import states.OptionsState;
+import ui.SplashTextData;
+import ui.SplashTextUI;
 import ui.backgrounds.Starfield;
 import ui.menu.TextButton;
 import utils.BMFont;
@@ -111,6 +113,8 @@ class MainMenuState extends FlxState
 		discordPresence.largeImageKey = "logo";
 		Discord.UpdatePresence(RawConstPointer.addressOf(discordPresence));
 		#end
+		var splash = new SplashText(logo, font);
+		add(splash);
 	}
 
 	override public function update(dt:Float):Void

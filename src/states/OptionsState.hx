@@ -20,6 +20,8 @@ class OptionsState extends FlxState
     var minX:Float;
     var maxX:Float;
 
+	public static var returnState:Class<FlxState> = null;
+
     override public function create()
     {
         super.create();
@@ -74,11 +76,19 @@ class OptionsState extends FlxState
 		var backBtn = new TextButton((FlxG.width - 150) / 2, FlxG.height - 50, Main.tongue.get("$GENERAL_BACK", "ui"), font, 150, 40);
 		backBtn.setCallback(() ->
 		{
-            FlxG.switchState(() -> new MainMenuState());
+			if (returnState != null)
+			{
+				var targetState = returnState;
+				returnState = null;
+				FlxG.switchState(Type.createInstance.bind(targetState, []));
+			}
+			else
+			{
+				FlxG.switchState(() -> new MainMenuState());
+			}
 		});
 		add(backBtn);
-
-        var now = Date.now();
+		var now = Date.now();
         var month = now.getMonth();
         var sprite = new FlxSprite();
 

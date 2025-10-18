@@ -77,42 +77,11 @@
   <object id="12" x="1344" y="384" width="64" height="768"/>
   <object id="13" x="256" y="384" width="64" height="768"/>
  </objectgroup>
- <objectgroup id="5" name="Interactions">
-  <object id="15" name="letter-puzzle" x="-256" y="192">
-   <properties>
-    <property name="data" value="ship.main.letters.c3"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="16" name="letter-puzzle" x="-960" y="1024">
-   <properties>
-    <property name="data" value="ship.main.letters.s2"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="17" name="letter-puzzle" x="-704" y="1216">
-   <properties>
-    <property name="data" value="ship.main.letters.e6"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="18" name="letter-puzzle" x="384" y="1024">
-   <properties>
-    <property name="data" value="ship.main.letters.a4"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="19" name="letter-puzzle" x="1024" y="576">
-   <properties>
-    <property name="data" value="ship.main.letters.p5"/>
-   </properties>
-   <point/>
-  </object>
- </objectgroup>
+ <objectgroup id="5" name="Interactions"/>
  <objectgroup id="4" name="RoomSwap">
   <object id="14" x="1856" y="704" width="64" height="128">
    <properties>
-    <property name="RoomFilename" value="rooms/ship-stairs.lua"/>
+    <property name="RoomFilename" value="assets/maps/ship-stairs.tmx"/>
     <property name="targetX" type="int" value="448"/>
     <property name="targetY" type="int" value="448"/>
    </properties>

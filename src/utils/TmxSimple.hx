@@ -12,6 +12,16 @@ typedef TmxLoadResult = {
     var mapWidth:Int;
     var mapHeight:Int;
     var hitboxes:Array<{x:Float, y:Float, width:Float, height:Float}>;
+	var roomSwaps:Array<
+		{
+			x:Float,
+			y:Float,
+			width:Float,
+			height:Float,
+			roomFilename:String,
+			targetX:Float,
+			targetY:Float
+		}>;
 }
 
 class TmxSimple {
@@ -19,7 +29,23 @@ class TmxSimple {
         var layers:Array<FlxTilemap> = [];
         var mapW = 0, mapH = 0, tileW = 0, tileH = 0;
         var firstGid = 1;
-        var hitboxes:Array<{x:Float, y:Float, width:Float, height:Float}> = [];
+		var hitboxes:Array<
+			{
+				x:Float,
+				y:Float,
+				width:Float,
+				height:Float
+			}> = [];
+		var roomSwaps:Array<
+			{
+				x:Float,
+				y:Float,
+				width:Float,
+				height:Float,
+				roomFilename:String,
+				targetX:Float,
+				targetY:Float
+			}> = [];
         #if sys
         var xmlString = File.getContent(tmxPath);
         var doc = Xml.parse(xmlString);
@@ -27,16 +53,30 @@ class TmxSimple {
         if (root == null || root.nodeName != "map") {
             throw 'Invalid TMX: root <map> not found in ' + tmxPath;
         }
-        mapW = Std.parseInt(root.get("width"));
-        mapH = Std.parseInt(root.get("height"));
-        tileW = Std.parseInt(root.get("tilewidth"));
-        tileH = Std.parseInt(root.get("tileheight"));
+		var wStr = root.get("width");
+		var hStr = root.get("height");
+		var twStr = root.get("tilewidth");
+		var thStr = root.get("tileheight");
+		trace("TMX attributes: width=" + wStr + " height=" + hStr + " tilewidth=" + twStr + " tileheight=" + thStr);
+		var parsedW = Std.parseInt(wStr);
+		var parsedH = Std.parseInt(hStr);
+		var parsedTW = Std.parseInt(twStr);
+		var parsedTH = Std.parseInt(thStr);
+		mapW = (parsedW != null) ? parsedW : 0;
+		mapH = (parsedH != null) ? parsedH : 0;
+		tileW = (parsedTW != null) ? parsedTW : 64;
+		tileH = (parsedTH != null) ? parsedTH : 64;
 
         
         for (ts in root.elements()) {
             if (ts.nodeName == "tileset") {
                 var fg = ts.get("firstgid");
-                if (fg != null && fg != "") firstGid = Std.parseInt(fg);
+				if (fg != null && fg != "")
+				{
+					var parsedFg = Std.parseInt(fg);
+					if (parsedFg != null)
+						firstGid = parsedFg;
+				}
                 break;
             }
         }
@@ -59,12 +99,18 @@ class TmxSimple {
 
             if (hasChunks) {
                 var grid = [for (_ in 0...(mapW * mapH)) 0];
+				trace("Grid size: " + grid.length + " (mapW=" + mapW + " mapH=" + mapH + ")");
                 for (chunk in dataNode.elements()) {
                     if (chunk.nodeName != "chunk") continue;
-                    var cx = Std.parseInt(chunk.get("x"));
-                    var cy = Std.parseInt(chunk.get("y"));
-                    var cw = Std.parseInt(chunk.get("width"));
-                    var ch = Std.parseInt(chunk.get("height"));
+					var cxParsed = Std.parseInt(chunk.get("x"));
+					var cyParsed = Std.parseInt(chunk.get("y"));
+					var cwParsed = Std.parseInt(chunk.get("width"));
+					var chParsed = Std.parseInt(chunk.get("height"));
+					var cx = (cxParsed != null) ? cxParsed : 0;
+					var cy = (cyParsed != null) ? cyParsed : 0;
+					var cw = (cwParsed != null) ? cwParsed : 0;
+					var ch = (chParsed != null) ? chParsed : 0;
+					trace("Processing chunk: cx=" + cx + " cy=" + cy + " cw=" + cw + " ch=" + ch);
                     var chunkText = getInnerText(chunk);
                     var rows = chunkText.split("\n");
                     var ry = 0;
@@ -74,8 +120,12 @@ class TmxSimple {
                         var vals = r.split(",");
                         for (rx in 0...vals.length) {
                             var vStr = StringTools.trim(vals[rx]);
-                            if (vStr == "") continue;
-                            var v = convertGid(Std.parseInt(vStr), firstGid);
+							if (vStr == "" || vStr == "null")
+								vStr = "0";
+							var parsed = Std.parseInt(vStr);
+							if (parsed == null)
+								parsed = 0;
+							var v = convertGid(parsed, firstGid);
                             var gx = cx + rx;
                             var gy = cy + ry;
                             if (gx >= 0 && gx < mapW && gy >= 0 && gy < mapH) {
@@ -101,8 +151,18 @@ class TmxSimple {
                     var vals = row.split(",");
                     for (rx in 0...vals.length) {
                         var vStr = StringTools.trim(vals[rx]);
-                        var v = (vStr == "") ? 0 : convertGid(Std.parseInt(vStr), firstGid);
-                        out.add(v);
+						if (vStr == "")
+							continue;
+						if (vStr == "null")
+							vStr = "0";
+						var parsed = Std.parseInt(vStr);
+						if (parsed == null)
+							parsed = 0;
+						var v = convertGid(parsed, firstGid);
+						var vString = Std.string(v);
+						if (vString == "null")
+							vString = "0";
+						out.add(vString);
                         if (rx < vals.length - 1) out.add(",");
                     }
                     if (ry < rows.length - 1) out.add("\n");
@@ -111,6 +171,7 @@ class TmxSimple {
             }
 
             if (csv != null) {
+				trace("CSV PREVIEW: " + csv.substr(0, 500));
                 var tilemap = new FlxTilemap();
                 tilemap.loadMapFromCSV(csv, tilesetGraphic, tileW, tileH);
                 tilemap.immovable = true;
@@ -123,14 +184,67 @@ class TmxSimple {
             if (objGroup.nodeName != "objectgroup") continue;
             var groupName = objGroup.get("name");
             if (groupName == "Hitboxes") {
+				trace("Found Hitboxes objectgroup");
+				var hitboxCount = 0;
                 for (obj in objGroup.elements()) {
                     if (obj.nodeName != "object") continue;
                     var ox = Std.parseFloat(obj.get("x"));
                     var oy = Std.parseFloat(obj.get("y"));
                     var ow = Std.parseFloat(obj.get("width"));
                     var oh = Std.parseFloat(obj.get("height"));
+					if (Math.isNaN(ox) || Math.isNaN(oy) || Math.isNaN(ow) || Math.isNaN(oh))
+					{
+						trace("Warning: Skipping hitbox with NaN values - x:" + ox + " y:" + oy + " w:" + ow + " h:" + oh);
+						continue;
+					}
+                    
                     hitboxes.push({x: ox, y: oy, width: ow, height: oh});
-                }
+					hitboxCount++;
+				}
+				trace("Loaded " + hitboxCount + " hitboxes");
+			}
+			else if (groupName == "RoomSwap")
+			{
+				for (obj in objGroup.elements())
+				{
+					if (obj.nodeName != "object")
+						continue;
+					var ox = Std.parseFloat(obj.get("x"));
+					var oy = Std.parseFloat(obj.get("y"));
+					var ow = Std.parseFloat(obj.get("width"));
+					var oh = Std.parseFloat(obj.get("height"));
+					var roomFilename = "";
+					var targetX = 0.0;
+					var targetY = 0.0;
+					for (propGroup in obj.elements())
+					{
+						if (propGroup.nodeName == "properties")
+						{
+							for (prop in propGroup.elements())
+							{
+								if (prop.nodeName != "property")
+									continue;
+								var pname = prop.get("name");
+								var pval = prop.get("value");
+								if (pname == "RoomFilename")
+									roomFilename = pval;
+								else if (pname == "targetX")
+									targetX = Std.parseFloat(pval);
+								else if (pname == "targetY")
+									targetY = Std.parseFloat(pval);
+							}
+						}
+					}
+					roomSwaps.push({
+						x: ox,
+						y: oy,
+						width: ow,
+						height: oh,
+						roomFilename: roomFilename,
+						targetX: targetX,
+						targetY: targetY
+					});
+				}
             }
         }
         #end
@@ -142,7 +256,8 @@ class TmxSimple {
             tileHeight: tileH,
             mapWidth: mapW,
             mapHeight: mapH,
-            hitboxes: hitboxes
+			hitboxes: hitboxes,
+			roomSwaps: roomSwaps
         };
     }
 
@@ -157,15 +272,24 @@ class TmxSimple {
     }
 
     static function gridToCSV(grid:Array<Int>, w:Int, h:Int):String {
+		trace("gridToCSV called: w=" + w + " h=" + h + " gridLen=" + grid.length);
         var sb = new StringBuf();
         for (y in 0...h) {
             for (x in 0...w) {
-                sb.add(grid[y * w + x]);
+				var idx = y * w + x;
+				var val = (idx < grid.length) ? grid[idx] : 0;
+				var valStr = Std.string(val);
+				if (valStr == "null")
+					valStr = "0";
+				sb.add(valStr);
                 if (x < w - 1) sb.add(",");
             }
             if (y < h - 1) sb.add("\n");
         }
-        return sb.toString();
+		var result = sb.toString();
+		result = StringTools.rtrim(result);
+		trace("gridToCSV complete, result length=" + result.length + " (after trim)");
+		return result;
     }
 
     

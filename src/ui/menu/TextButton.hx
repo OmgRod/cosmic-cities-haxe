@@ -39,6 +39,14 @@ class TextButton extends FlxGroup
         add(label);
     }
 
+	public function setScrollFactor(x:Float, y:Float):Void
+	{
+		if (button != null)
+			button.scrollFactor.set(x, y);
+		if (label != null)
+			label.scrollFactor.set(x, y);
+	}
+
     public function setCallback(callback:Void->Void):Void
     {
         userCallback = callback;

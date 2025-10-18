@@ -65,7 +65,7 @@ class SaveSelectState extends FlxState {
         
         var backW = 140; var backH = 38;
         var backX = (FlxG.width - backW) / 2;
-        var backY = FlxG.height - backH - 20;
+		var backY = FlxG.height - backH - 30;
         var backBtn = new TextButton(backX, backY, Main.tongue.get("$GENERAL_BACK", "ui"), font, backW, backH);
         backBtn.setCallback(() -> FlxG.switchState(() -> new MainMenuState()));
         add(backBtn);

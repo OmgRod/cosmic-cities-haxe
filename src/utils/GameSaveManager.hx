@@ -90,8 +90,14 @@ class GameSaveManager {
             var json = File.getContent(path);
             try {
                 var obj:Dynamic = Json.parse(json);
-                var d:SaveData = { username: obj.username, playTimeSeconds: obj.playTimeSeconds };
-                return d;
+				var prev:Null<SaveData> = currentData;
+				var totalTime:Int = obj.playTimeSeconds;
+				if (prev != null && slot == currentSlot)
+				{
+					totalTime += prev.playTimeSeconds;
+				}
+				var d:SaveData = {username: obj.username, playTimeSeconds: totalTime};
+				return d;
             } catch (_:Dynamic) {
                 return null;
             }

@@ -45,8 +45,11 @@ class TmxLoader {
                         var vals = rowTrim.split(",");
                         for (colIndex in 0...vals.length) {
                             var vStr = StringTools.trim(vals[colIndex]);
-                            if (vStr == "") continue;
+							if (vStr == "" || vStr == "null")
+								vStr = "0";
                             var v = Std.parseInt(vStr);
+							if (v == null)
+								v = 0;
                             var gx = cx + colIndex;
                             var gy = cy + rowIndex;
                             if (gx >= 0 && gx < mapWidth && gy >= 0 && gy < mapHeight) {
@@ -61,7 +64,9 @@ class TmxLoader {
                 var sb = new StringBuf();
                 for (ry in 0...mapHeight) {
                     for (rx in 0...mapWidth) {
-                        sb.add(grid[ry * mapWidth + rx]);
+						var idx = ry * mapWidth + rx;
+						var val = (idx < grid.length) ? grid[idx] : 0;
+						sb.add(val);
                         if (rx < mapWidth - 1) sb.add(",");
                     }
                     if (ry < mapHeight - 1) sb.add("\n");
