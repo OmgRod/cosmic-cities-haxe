@@ -8,6 +8,34 @@
 				"kind": "build",
 				"isDefault": true
 			}
+		},
+		{
+			"label": "lime test windows",
+			"type": "shell",
+			"command": "lime",
+			"args": [
+				"test",
+				"windows"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "lime run windows",
+			"type": "shell",
+			"command": "lime",
+			"args": [
+				"test",
+				"windows"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
 		}
 	]
 }

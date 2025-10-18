@@ -128,7 +128,7 @@ class OptionsState extends FlxState
 		static var wasDragging = false;
 		if (wasDragging && !dragging)
 		{
-            // make the save thing here
+
 		}
 		wasDragging = dragging;
     }

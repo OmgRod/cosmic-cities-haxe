@@ -4,7 +4,7 @@
   <export target="ship-stairs.lua" format="lua"/>
  </editorsettings>
  <tileset firstgid="1" name="CC_shipSheet_001" tilewidth="64" tileheight="64" tilecount="64" columns="8">
-  <image source="../assets/sprites/CC_shipSheet_001.png" width="512" height="512"/>
+  <image source="../../../../love2d/cosmic-cities/assets/sprites/CC_shipSheet_001.png" width="512" height="512"/>
  </tileset>
  <layer id="1" name="Ground" width="15" height="15">
   <data encoding="csv">

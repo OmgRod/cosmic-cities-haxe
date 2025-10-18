@@ -38,6 +38,12 @@ class Main extends Sprite
 
 		FlxG.signals.postStateSwitch.add(setupEscapeQuitText);
 		addChild(new FlxGame(640, 480, LoadingState));
+		#if FLX_SOUND_SYSTEM
+		FlxG.sound.volumeUpKeys = null;
+		FlxG.sound.volumeDownKeys = null;
+		FlxG.sound.muteKeys = null;
+		#end
+		
 		stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
 		stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
 		addEventListener(Event.ENTER_FRAME, onEnterFrame);

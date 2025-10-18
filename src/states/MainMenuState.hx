@@ -30,7 +30,7 @@ class MainMenuState extends FlxState
 		super.create();
 
 		buttonCallbacks = new Map();
-		buttonCallbacks.set("start", () -> FlxG.switchState(() -> new GameState()));
+		buttonCallbacks.set("start", () -> FlxG.switchState(() -> new SaveSelectState()));
 		buttonCallbacks.set("options", () -> FlxG.switchState(() -> new OptionsState()));
 		buttonCallbacks.set("credits", () -> FlxG.switchState(() -> new CreditsState()));
 

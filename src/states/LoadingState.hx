@@ -13,8 +13,6 @@ import cpp.ConstCharStar;
 import cpp.Function;
 import cpp.RawConstPointer;
 import cpp.RawPointer;
-// import discord.CDiscord;
-// import discord.Discord;
 import hxdiscord_rpc.Discord;
 import hxdiscord_rpc.Types;
 #end
@@ -70,21 +68,9 @@ class LoadingState extends FlxState
 				loadingStep++;
                 runNextStep();
 
-			// case 2:
-			//     updateStatus("Loading data...");
-			// 	Assets.getText("assets/maps/ship-main.tmx");
-			// 	Assets.getText("assets/maps/ship-cockpit.tmx");
-			// 	Assets.getText("assets/maps/ship-stairs.tmx");
-			// 	Assets.getText("assets/maps/ship-topfloor.tmx");
-			//     loadingStep++;
-			//     runNextStep();
 
-			// case 3:
-			//     updateStatus("Finalizing...");
-			//     loadingStep++;
-			//     runNextStep();
 
-			case 2: // 4
+			case 2: 
 				updateStatus(Main.tongue.get("$LOADING_DONE", "ui"));
                 progressBar.value = 4;
 				FlxG.switchState(() -> new MainMenuState());
@@ -107,7 +93,6 @@ class LoadingState extends FlxState
         handlers.disconnected = Function.fromStaticFunction(onDisconnected);
         handlers.errored = Function.fromStaticFunction(onError);
 		Discord.Initialize("1392251941349757110", RawPointer.addressOf(handlers), false, null);
-		// var client = new Client(new Discord_Client(), DiscordObjectState.Owned);
 		#end
 
         done();
