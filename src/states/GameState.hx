@@ -1,7 +1,7 @@
 package states;
 
-import data.ExampleDialogue;
-import data.ExampleInteractables;
+// import data.ExampleDialogue;
+// import data.ExampleInteractables;
 import entities.Player;
 import flixel.FlxCamera;
 import flixel.FlxG;
@@ -59,11 +59,11 @@ class GameState extends FlxState
 		dialogueManager = DialogueManager.getInstance();
 		interactionManager = InteractionManager.getInstance();
 
-		dialogueManager.registerDialogue(ExampleDialogue.getTutorialTree());
-		dialogueManager.registerDialogue(ExampleDialogue.getShipCaptainTree());
-		dialogueManager.registerDialogue(ExampleDialogue.getCrewMemberTree());
+		// dialogueManager.registerDialogue(ExampleDialogue.getTutorialTree());
+		// dialogueManager.registerDialogue(ExampleDialogue.getShipCaptainTree());
+		// dialogueManager.registerDialogue(ExampleDialogue.getCrewMemberTree());
 
-		ExampleInteractables.setupInteractions(interactionManager);
+		// ExampleInteractables.setupInteractions(interactionManager);
 
 		setupEventListeners();
 

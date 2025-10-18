@@ -72,7 +72,7 @@ class CreditsState extends FlxState
 
 		addSectionTitle(Main.tongue.get("$CREDITS_SECTION_AUDIO", "ui"));
 		addCreditItem(Main.tongue.get("$CREDITS_ROLE_MUSIC_COMPOSER", "ui"), "PumpkinSmarty & OmgRod");
-		addCreditItem(Main.tongue.get("$CREDITS_ROLE_SOUND_DESIGN", "ui"), "OmgRod");
+		addCreditItem(Main.tongue.get("$CREDITS_ROLE_SOUND_DESIGN", "ui"), "OmgRod & Bfxr");
 		addSpacer(sectionSpacing);
 
 		addSectionTitle(Main.tongue.get("$CREDITS_SECTION_WRITING", "ui"));
