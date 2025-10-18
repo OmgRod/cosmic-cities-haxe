@@ -54,11 +54,11 @@ This game uses the following Haxe libraries:
 - [firetongue](https://github.com/larsiusprime/firetongue)
 - [nape-haxe4](https://github.com/deltaluca/nape)
 - [hxdiscord_rpc](https://github.com/discord/discord-rpc)
-- [ase](https://github.com/eliasku/ase)
+- [ase](https://github.com/miriti/ase)
 - [actuate](https://github.com/jgranick/actuate)
 - [polymod](https://github.com/larsiusprime/polymod)
 - [hxcpp](https://github.com/HaxeFoundation/hxcpp)
-- [cxx2hx](https://github.com/kevinresol/cxx2hx)
+- [cxx2hx](https://github.com/SomeRanDev/cxx2hx)
 
 All dependencies are managed via Haxelib and listed in `Project.xml`.
 
