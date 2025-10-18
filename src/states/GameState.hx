@@ -25,6 +25,7 @@ import utils.TmxSimple;
 
 class GameState extends FlxState
 {
+
 	var gameManager:GameManager;
 	var eventManager:EventManager;
 	var storyManager:StoryManager;
@@ -39,25 +40,34 @@ class GameState extends FlxState
 	var mapOffsetX:Float = 0;
 	var mapOffsetY:Float = 0;
 	var cameraTarget:FlxSprite;
-	var cameraYOffset:Float = 8; 
+	var cameraYOffset:Float = 8;
+
+	var isPaused:Bool = false;
+	var pauseOverlay:FlxSprite;
 
 	override public function create()
     {
-        super.create();
+	super.create();
 
-        var starfield = new Starfield();
-        add(starfield);
+	var starfield = new Starfield();
+	add(starfield);
 
-		var progressBar = new ProgressBar((FlxG.width / 2) - (460 / 2), 32, 460);
-		add(progressBar);
+	var progressBar = new ProgressBar((FlxG.width / 2) - (460 / 2), 32, 460);
+	add(progressBar);
 
-		MusicManager.stop("intro");
+	MusicManager.stop("intro");
 
-		gameManager = GameManager.getInstance();
-		eventManager = EventManager.getInstance();
-		storyManager = StoryManager.getInstance();
-		dialogueManager = DialogueManager.getInstance();
-		interactionManager = InteractionManager.getInstance();
+	gameManager = GameManager.getInstance();
+	eventManager = EventManager.getInstance();
+	storyManager = StoryManager.getInstance();
+	dialogueManager = DialogueManager.getInstance();
+	interactionManager = InteractionManager.getInstance();
+
+	pauseOverlay = new FlxSprite(0, 0);
+	pauseOverlay.makeGraphic(FlxG.width, FlxG.height, 0x88000000);
+	pauseOverlay.scrollFactor.set(0, 0);
+	pauseOverlay.visible = false;
+	add(pauseOverlay);
 
 		// dialogueManager.registerDialogue(ExampleDialogue.getTutorialTree());
 		// dialogueManager.registerDialogue(ExampleDialogue.getShipCaptainTree());
@@ -135,6 +145,20 @@ class GameState extends FlxState
 	}
 	override public function update(elapsed:Float):Void
 	{
+		// Pause menu logic
+		if (FlxG.keys.justPressed.ESCAPE) {
+			isPaused = !isPaused;
+			pauseOverlay.visible = isPaused;
+		}
+
+		if (isPaused) {
+			// Show pause overlay and block gameplay input
+			pauseOverlay.visible = true;
+			return;
+		} else {
+			pauseOverlay.visible = false;
+		}
+
 		var moveSpeed = 180;
 		player.velocity.set(0, 0);
 		if (FlxG.keys.pressed.LEFT)

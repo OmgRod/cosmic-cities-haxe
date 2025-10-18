@@ -12,10 +12,11 @@ import utils.BMFont;
 class CreditsState extends FlxState
 {
 	var creditsGroup:FlxGroup;
+	var itemData:Array<{item:flixel.FlxBasic, initialY:Float}> = [];
 	var scrollSpeed:Float = 40;
 	var scrollOffset:Float = 0;
 	var totalHeight:Float = 0;
-	var backBtn:FlxButton;
+	var skipHint:FlxBitmapText;
 	var fontString:String;
 	var font:Dynamic;
 	var fadeStarted:Bool = false;
@@ -31,14 +32,32 @@ class CreditsState extends FlxState
 		creditsGroup = new FlxGroup();
 		add(creditsGroup);
 
-		var sectionSpacing = 32.0;
-		var y = 0.0;
+		// Add Cosmic Cities logo to creditsGroup so it scrolls with credits
+		var logo = new flixel.FlxSprite(0, 0, "assets/sprites/CC_titleLogo_001.png");
+		logo.scrollFactor.set(0, 0);
+		// Clamp logo width to max 80% of screen width
+		var maxLogoWidth = FlxG.width * 0.8;
+		var maxLogoHeight = 120; // You can adjust this value for desired max height
+		var scaleW = maxLogoWidth / logo.width;
+		var scaleH = maxLogoHeight / logo.height;
+		var scale = Math.min(Math.min(scaleW, scaleH), 1.0); // Don't upscale if smaller
+		logo.scale.set(scale, scale);
+		logo.updateHitbox();
+		logo.x = (FlxG.width - logo.width) / 2;
+		// Logo should appear first in credits scroll
+		logo.y = 0;
+		creditsGroup.add(logo);
+		itemData.push({item: logo, initialY: 0});
+
+		var sectionSpacing = 48.0; // Increased padding between sections
+		var y = logo.height + 32; // Extra padding after logo
 
 		inline function addSectionTitle(text:String)
 		{
 			var t = makeSectionTitle(text);
 			t.y = y;
 			creditsGroup.add(t);
+			itemData.push({item: t, initialY: y});
 			y += t.height;
 		}
 		inline function addCreditItem(role:String, name:String)
@@ -46,6 +65,7 @@ class CreditsState extends FlxState
 			var t = makeCreditItem(role, name);
 			t.y = y;
 			creditsGroup.add(t);
+			itemData.push({item: t, initialY: y});
 			y += t.height;
 		}
 		inline function addCenteredText(text:String, scale:Float = 0.8, color:Int = 0xFFFFFFFF)
@@ -53,6 +73,7 @@ class CreditsState extends FlxState
 			var t = makeCenteredText(text, scale, color);
 			t.y = y;
 			creditsGroup.add(t);
+			itemData.push({item: t, initialY: y});
 			y += t.height;
 		}
 		inline function addSpacer(h:Float)
@@ -96,7 +117,7 @@ class CreditsState extends FlxState
 
 		addSectionTitle(Main.tongue.get("$CREDITS_SECTION_THANKS", "ui"));
 		addCenteredText(Main.tongue.get("$CREDITS_THANKS_COMMUNITY", "ui"), 0.8, 0xFFAAAAAA);
-		addCenteredText(Main.tongue.get("$CREDITS_THANKS_DISCORD", "ui"), 0.8, 0xFFAAAAAA);
+		addCenteredText("haxeflixel.com", 0.8, 0xFFAAAAAA);
 		addSpacer(sectionSpacing);
 
 		addSpacer(sectionSpacing);
@@ -104,15 +125,17 @@ class CreditsState extends FlxState
 		addSpacer(sectionSpacing);
 
 		totalHeight = y;
-		setCreditsY(FlxG.height);
 
-		backBtn = new FlxButton(0, 0, Main.tongue.get("$GENERAL_BACK", "ui"), function() startFadeToMenu());
-		backBtn.width = 140;
-		backBtn.height = 38;
-		ButtonStyle.apply(backBtn, ButtonStyleType.NoBackground);
-		backBtn.x = (FlxG.width - backBtn.width) / 2;
-		backBtn.y = FlxG.height - backBtn.height - 18;
-		add(backBtn);
+		// Add skip hint at bottom center, translucent, padded up
+		skipHint = new FlxBitmapText(0, 0, Main.tongue.get("$CREDITS_SKIP_HINT", "ui"), font);
+		skipHint.scale.set(0.9, 0.9);
+		skipHint.updateHitbox();
+		skipHint.color = 0xFFFFFF;
+		skipHint.alpha = 0.5;
+		skipHint.x = (FlxG.width - skipHint.textWidth * skipHint.scale.x) / 2;
+		skipHint.y = FlxG.height - skipHint.height - 24;
+		skipHint.scrollFactor.set(0, 0);
+		add(skipHint);
 	}
 
 	override public function update(elapsed:Float)
@@ -122,11 +145,29 @@ class CreditsState extends FlxState
 			return;
 
 		scrollOffset += scrollSpeed * elapsed;
-		setCreditsY(FlxG.height - scrollOffset);
+		var offsetY = FlxG.height - scrollOffset;
+		
+		// Update all items to their scrolled positions
+		for (data in itemData)
+		{
+			if (Std.isOfType(data.item, flixel.FlxSprite))
+			{
+				var s:flixel.FlxSprite = cast data.item;
+				s.y = offsetY + data.initialY;
+				s.x = (FlxG.width - s.width) / 2;
+			}
+			else if (Std.isOfType(data.item, FlxBitmapText))
+			{
+				var t:FlxBitmapText = cast data.item;
+				t.y = offsetY + data.initialY;
+				t.x = (FlxG.width - t.textWidth * t.scale.x) / 2;
+			}
+		}
 
-		if (scrollOffset > totalHeight + 40)
+		// Only fade out after all credits have fully scrolled off the top
+		if (offsetY + totalHeight < 0)
 			startFadeToMenu();
-		if (FlxG.keys.justPressed.ESCAPE || FlxG.keys.justPressed.BACKSPACE)
+		if (FlxG.keys.justPressed.ESCAPE)
 			startFadeToMenu();
 	}
 
@@ -138,20 +179,7 @@ class CreditsState extends FlxState
 		FlxG.camera.fade(0xFF000000, 1.0, false, function() FlxG.switchState(() -> new MainMenuState()));
 	}
 
-	function setCreditsY(startY:Float)
-	{
-		var y = startY;
-		for (item in creditsGroup.members)
-		{
-			if (item != null && Std.isOfType(item, FlxBitmapText))
-			{
-				var t:FlxBitmapText = cast item;
-				t.x = (FlxG.width - t.textWidth * t.scale.x) / 2;
-				t.y = y;
-				y += t.height;
-			}
-		}
-	}
+
 
 	function makeSectionTitle(text:String):FlxBitmapText
 	{

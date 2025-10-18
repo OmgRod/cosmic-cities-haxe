@@ -68,7 +68,7 @@ class Main extends Sprite
 
 	function onKeyDown(e:KeyboardEvent):Void
 	{
-		if (e.keyCode == Keyboard.ESCAPE && !escapeHeld)
+		if (e.keyCode == Keyboard.BACKSPACE && !escapeHeld)
 		{
 			escapeHeld = true;
 			escapeHoldTime = 0;
@@ -83,7 +83,7 @@ class Main extends Sprite
 
 	function onKeyUp(e:KeyboardEvent):Void
 	{
-		if (e.keyCode == Keyboard.ESCAPE)
+		if (e.keyCode == Keyboard.BACKSPACE)
 		{
 			escapeHeld = false;
 			escapeHoldTime = 0;
