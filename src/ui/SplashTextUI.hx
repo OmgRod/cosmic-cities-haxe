@@ -89,8 +89,8 @@ class SplashText extends FlxGroup {
 		this.centerY = py;
 
 		this.text.scale.set(this.baseScale, this.baseScale);
-		this.text.x = this.centerX;
-		this.text.y = this.centerY;
+		this.text.x = this.centerX - this.text.origin.x;
+		this.text.y = this.centerY - this.text.origin.y;
     }
 
     override function update(elapsed:Float):Void {

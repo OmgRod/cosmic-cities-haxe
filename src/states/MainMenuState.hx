@@ -114,8 +114,8 @@ class MainMenuState extends FlxState
 		discordPresence.largeImageKey = "logo";
 		Discord.UpdatePresence(RawConstPointer.addressOf(discordPresence));
 		#end
-		var splash = new SplashText(logo, font);
-		add(splash);
+		// var splash = new SplashText(logo, font);
+		// add(splash);
 	}
 
 	override public function update(dt:Float):Void
