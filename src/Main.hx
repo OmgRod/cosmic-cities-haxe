@@ -14,6 +14,10 @@ import openfl.events.KeyboardEvent;
 import openfl.ui.Keyboard;
 import states.LoadingState;
 import utils.BMFont;
+import utils.GameSaveManager;
+#if js
+import newgrounds.NewgroundsAPI;
+#end
 
 class Main extends Sprite
 {
@@ -30,23 +34,53 @@ class Main extends Sprite
 	public function new()
 	{
 		super();
-		tongue = new FireTongueEx();
+		try
+		{
+			tongue = new FireTongueEx();
 
-		tongue.initialize({
-			locale: "en-US"
-		});
+			var savedOptions = GameSaveManager.loadOptionsWithDefaults();
+			var localeToUse = savedOptions.language;
+			var volumeToUse = savedOptions.volume;
 
-		FlxG.signals.postStateSwitch.add(setupEscapeQuitText);
-		addChild(new FlxGame(640, 480, LoadingState));
-		#if FLX_SOUND_SYSTEM
-		FlxG.sound.volumeUpKeys = null;
-		FlxG.sound.volumeDownKeys = null;
-		FlxG.sound.muteKeys = null;
-		#end
-		
-		stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
-		stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
-		addEventListener(Event.ENTER_FRAME, onEnterFrame);
+			trace("About to initialize FireTongue with locale: " + localeToUse);
+			tongue.initialize({
+				locale: localeToUse
+			});
+			trace("FireTongue initialized successfully");
+
+			#if js
+			try
+			{
+				NG.create("61009:R39LSic5");
+				trace("Newgrounds API initialized successfully with app ID 61009");
+			}
+			catch (e:Dynamic)
+			{
+				trace("Newgrounds API initialization warning: " + e);
+			}
+			#end
+
+			FlxG.signals.postStateSwitch.add(setupEscapeQuitText);
+			addChild(new FlxGame(640, 480, LoadingState));
+			#if FLX_SOUND_SYSTEM
+			#if !android
+			FlxG.sound.volumeUpKeys = null;
+			FlxG.sound.volumeDownKeys = null;
+			FlxG.sound.muteKeys = null;
+			#end
+			#end
+
+			#if cpp
+			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
+			addEventListener(Event.ENTER_FRAME, onEnterFrame);
+			#end
+		}
+		catch (e:Dynamic)
+		{
+			trace("FATAL ERROR in Main constructor: " + e);
+			trace("Stack: " + haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
+		}
 	}
 
 	function setupEscapeQuitText():Void

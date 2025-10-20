@@ -2,3 +2,5 @@
 "$CAPTAINRAY_INTRODUCTION_01","Bem-vindo [color=#4a52e1]a bordo[/color]. Parece que é sua [instant=100]primeira vez[/instant] jogando. (Pressione Enter para continuar)"
 "$CAPTAINRAY_INTRODUCTION_02","Gostaria de passar por um breve tutorial? Use as teclas esquerda e direita para escolher, depois pressione Enter."
 "$LETTER_FOUND","Você [color=yellow]encontrou[/color] uma [color=blue]letra[/color]!"
+"$EVACUATION_EVACUATE","TODOS EVACUAR A NAVE"
+"$EVACUATION_GATHER_NOTES","{player}, por favor reúna todas as notas ao redor da nave para obter o código de fuga. Você tem 10 minutos."

@@ -2,3 +2,5 @@
 "$CAPTAINRAY_INTRODUCTION_01","Добро пожаловать на [color=#4a52e1]борт[/color]. [instant=100]Похоже, вы играете впервые[/instant]. (Нажмите Enter для продолжения)"
 "$CAPTAINRAY_INTRODUCTION_02","Хотите пройти краткое руководство? Используйте клавиши влево/вправо для выбора, затем нажмите Enter."
 "$LETTER_FOUND","Вы [color=yellow]нашли[/color] [color=blue]букву[/color]!"
+"$EVACUATION_EVACUATE","ВСЕ ЭВАКУИРУЮТСЯ С КОРАБЛЯ"
+"$EVACUATION_GATHER_NOTES","{player_name}, пожалуйста, собери все записки..."

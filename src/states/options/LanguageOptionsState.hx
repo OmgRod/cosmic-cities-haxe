@@ -10,6 +10,7 @@ import states.OptionsState;
 import ui.backgrounds.Starfield;
 import ui.menu.TextButton;
 import utils.BMFont;
+import utils.GameSaveManager;
 
 class LanguageOptionsState extends FlxState
 {
@@ -148,6 +149,10 @@ class LanguageOptionsState extends FlxState
 					Reflect.callMethod(Main.tongue, Reflect.field(Main.tongue, "setLocale"), [capturedId]);
                 else
 					Main.tongue.initialize({locale: capturedId});
+
+				var currentOptions = GameSaveManager.loadOptions();
+				var volume = currentOptions != null ? currentOptions.volume : 1.0;
+				GameSaveManager.saveOptions({language: capturedId, volume: volume});
 
 				loadFontAndTexts();
             });

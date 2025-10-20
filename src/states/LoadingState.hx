@@ -4,11 +4,11 @@ import flixel.FlxG;
 import flixel.FlxState;
 import flixel.text.FlxBitmapText;
 import flixel.ui.FlxBar;
-import manager.MusicManager;
+import managers.MusicManager;
 import states.MainMenuState;
 import ui.backgrounds.Starfield;
 import utils.BMFont;
-#if cpp
+#if (cpp && !android)
 import cpp.ConstCharStar;
 import cpp.Function;
 import cpp.RawConstPointer;
@@ -53,22 +53,28 @@ class LoadingState extends FlxState
         switch (loadingStep)
         {
 			case 0:
+				#if cpp
 				updateStatus(Main.tongue.get("$LOADING_INIT_DC_RPC", "ui"));
 				initDiscordRpc(() ->
 				{
 					loadingStep++;
 					runNextStep();
 				});
+				#else
+				loadingStep++;
+				runNextStep();
+				#end
 
 			case 1:
 				updateStatus(Main.tongue.get("$LOADING_LD_ASSETS", "ui"));
 				MusicManager.load("intro", "assets/sounds/music.intro.wav", true);
 				MusicManager.load("intro.old", "assets/sounds/music.intro.old.wav", true);
+				MusicManager.load("geton", "assets/sounds/music.geton.wav", true);
+				MusicManager.load("firstencounter", "assets/sounds/music.firstencounter.mp3", false);
+				MusicManager.load("roundone", "assets/sounds/music.roundone.mp3", true);
 
 				loadingStep++;
                 runNextStep();
-
-
 
 			case 2: 
 				updateStatus(Main.tongue.get("$LOADING_DONE", "ui"));
@@ -87,7 +93,7 @@ class LoadingState extends FlxState
 
     function initDiscordRpc(done:Void->Void):Void
     {
-		#if cpp
+		#if (cpp && !android)
         final handlers:DiscordEventHandlers = new DiscordEventHandlers();
         handlers.ready = Function.fromStaticFunction(onReady);
         handlers.disconnected = Function.fromStaticFunction(onDisconnected);
@@ -98,7 +104,7 @@ class LoadingState extends FlxState
         done();
     }
 
-	#if cpp
+	#if (cpp && !android)
     static function onReady(request:RawConstPointer<DiscordUser>):Void
     {
         final discordPresence = new DiscordRichPresence();

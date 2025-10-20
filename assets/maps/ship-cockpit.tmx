@@ -56,7 +56,7 @@
    <properties>
     <property name="RoomFilename" value="assets/maps/ship-main.tmx"/>
     <property name="targetX" type="int" value="1664"/>
-    <property name="targetY" type="int" value="2976"/>
+    <property name="targetY" type="int" value="1920"/>
    </properties>
   </object>
  </objectgroup>

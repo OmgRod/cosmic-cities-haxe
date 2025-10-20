@@ -1,6 +1,6 @@
 package states;
 
-#if cpp
+#if (cpp && !android)
 import Sys;
 import cpp.RawConstPointer;
 import hxdiscord_rpc.Discord;
@@ -12,7 +12,7 @@ import flixel.FlxState;
 import flixel.group.FlxGroup;
 import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
-import manager.MusicManager;
+import managers.MusicManager;
 import states.CreditsState;
 import states.GameState;
 import states.OptionsState;
@@ -55,6 +55,7 @@ class MainMenuState extends FlxState
 		logo.updateHitbox();
 		logo.x = vw * 0.1;
 		logo.y = vh * 0.15;
+		logo.scrollFactor.set(0, 0);
 		add(logo);
 
 		var fontString = Main.tongue.getFontData("pixel_operator", 16).name;
@@ -105,7 +106,7 @@ class MainMenuState extends FlxState
 			buttonGroup.add(btn);
 		}
 
-		#if cpp
+		#if (cpp && !android)
 		final discordPresence = new DiscordRichPresence();
 		discordPresence.largeImageText = "Cosmic Cities";
 		discordPresence.details = "Browsing menus...";

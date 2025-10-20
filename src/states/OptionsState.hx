@@ -4,12 +4,13 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.text.FlxBitmapText;
-import manager.MusicManager;
+import managers.MusicManager;
 import states.options.LanguageOptionsState;
 import ui.backgrounds.Starfield;
 import ui.menu.SliderKnob;
 import ui.menu.TextButton;
 import utils.BMFont;
+import utils.GameSaveManager;
 
 class OptionsState extends FlxState
 {
@@ -117,6 +118,7 @@ class OptionsState extends FlxState
     {
         super.update(elapsed);
 
+		#if !android
         if (FlxG.mouse.justPressed && FlxG.mouse.overlaps(sliderKnob))
         {
             dragging = true;
@@ -124,6 +126,7 @@ class OptionsState extends FlxState
         else if (FlxG.mouse.justReleased)
         {
             dragging = false;
+			saveCurrentOptions();
         }
 
         if (dragging)
@@ -134,6 +137,7 @@ class OptionsState extends FlxState
             MusicManager.setGlobalVolume(newVolume);
             volumeText.text = Std.string(Math.round(newVolume * 100)) + "%";
         }
+		#end
 
 		static var wasDragging = false;
 		if (wasDragging && !dragging)
@@ -142,4 +146,10 @@ class OptionsState extends FlxState
 		}
 		wasDragging = dragging;
     }
+	function saveCurrentOptions():Void
+	{
+		var currentOptions = GameSaveManager.loadOptions();
+		var language = currentOptions != null ? currentOptions.language : "en-US";
+		GameSaveManager.saveOptions({language: language, volume: FlxG.sound.volume});
+	}
 }

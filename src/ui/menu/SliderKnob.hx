@@ -16,9 +16,11 @@ class SliderKnob extends FlxSprite {
 
     override public function update(elapsed:Float):Void {
         super.update(elapsed);
+		#if !android
         if (FlxG.mouse.overlaps(this))
             makeGraphic(knobWidth, knobHeight, 0xFFFFFF00);
         else
             makeGraphic(knobWidth, knobHeight, 0xFFFFFFFF);
+		#end
     }
 }

@@ -1,7 +1,12 @@
 package utils;
 
 import flixel.tile.FlxTilemap;
+#if sys
 import sys.io.File;
+#end
+#if js
+import openfl.utils.Assets;
+#end
 
 typedef TmxLoadResult = {
     var layers:Array<FlxTilemap>;
@@ -48,6 +53,11 @@ class TmxSimple {
 			}> = [];
         #if sys
         var xmlString = File.getContent(tmxPath);
+		#elseif js
+		var xmlString = Assets.getText(tmxPath);
+		#end
+
+		#if (sys || js)
         var doc = Xml.parse(xmlString);
         var root = doc.firstElement();
         if (root == null || root.nodeName != "map") {
@@ -188,13 +198,30 @@ class TmxSimple {
 				var hitboxCount = 0;
                 for (obj in objGroup.elements()) {
                     if (obj.nodeName != "object") continue;
-                    var ox = Std.parseFloat(obj.get("x"));
-                    var oy = Std.parseFloat(obj.get("y"));
-                    var ow = Std.parseFloat(obj.get("width"));
-                    var oh = Std.parseFloat(obj.get("height"));
+					var xStr = obj.get("x");
+					var yStr = obj.get("y");
+					var wStr = obj.get("width");
+					var hStr = obj.get("height");
+
+					if (wStr == null || hStr == null || wStr == "" || hStr == "")
+					{
+						trace("Skipping object without width/height (likely a point object)");
+						continue;
+					}
+
+					var ox = Std.parseFloat(xStr);
+					var oy = Std.parseFloat(yStr);
+					var ow = Std.parseFloat(wStr);
+					var oh = Std.parseFloat(hStr);
+					
 					if (Math.isNaN(ox) || Math.isNaN(oy) || Math.isNaN(ow) || Math.isNaN(oh))
 					{
 						trace("Warning: Skipping hitbox with NaN values - x:" + ox + " y:" + oy + " w:" + ow + " h:" + oh);
+						continue;
+					}
+					if (ow <= 0 || oh <= 0)
+					{
+						trace("Warning: Skipping hitbox with invalid dimensions - w:" + ow + " h:" + oh);
 						continue;
 					}
                     

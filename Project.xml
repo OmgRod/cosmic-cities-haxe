@@ -3,6 +3,13 @@
 	xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
 	<!-- _________________________ Application Settings _________________________ -->
+	<!--
+	BUILD TARGETS:
+	- Windows (cpp):   Full features with Discord RPC, keyboard/mouse input
+	- HTML5 (js):      Web version, touch-friendly, all features (recommended for mobile)
+	- Android (cpp):   Has a known limitation - Android NDK doesn't support RTTI/typeinfo
+	                    which hxcpp requires. Use HTML5 target for Android deployment.
+	-->
 	
 	<app title="Cosmic Cities" file="CosmicCities" main="Main" version="1.0.0" company="OmgRod" />
 	
@@ -34,6 +41,12 @@
 	<!--Mobile-specific-->
 	<window if="mobile" orientation="landscape" fullscreen="true" width="0" height="0" />
 	
+	<!-- Android-specific build configuration -->
+	<set name="ANDROID_SETUP" value="1" if="android" />
+	<set name="HXCPP_COMPILE_THREADS" value="1" if="android" />
+	<set name="HXCPP_NO_PRECOMPILED_HEADERS" value="1" if="android" />
+	<set name="toolchain" value="clang" if="android" />
+	
 	<!-- _____________________________ Path Settings ____________________________ -->
 	
 	<set name="BUILD_DIR" value="export" />
@@ -47,12 +60,13 @@
 	<haxelib name="flixel-ui" />
 	<haxelib name="firetongue" />
 	<haxelib name="nape-haxe4" />
-	<haxelib name="hxdiscord_rpc" />
+	<haxelib name="hxdiscord_rpc" if="cpp" unless="android" />
 	<haxelib name="ase" />
 	<haxelib name="actuate" />
 	<haxelib name="polymod" />
-	<haxelib name="hxcpp" />
-	<haxelib name="cxx2hx" />
+	<haxelib name="newgrounds" if="html5" />
+	<haxelib name="hxcpp" if="cpp" />
+	<haxelib name="cxx2hx" if="cpp" />
 	
 	<!-- ______________________________ Haxedefines _____________________________ -->
 	
@@ -72,6 +86,13 @@
 	<haxedef name="FLX_NO_MOUSE" if="mobile" />
 	<haxedef name="FLX_NO_KEYBOARD" if="mobile" />
 	<haxedef name="FLX_NO_TOUCH" if="desktop" />
+	
+	<!--HTML5-specific optimizations-->
+	<haxedef name="FLX_NO_GAMEPAD" if="html5" />
+	<haxedef name="FLX_NO_NATIVE_CURSOR" if="html5" />
+
+	<!--Android-specific optimizations-->
+	<haxedef name="HXCPP_NO_PRECOMPILED_HEADERS" if="android" />
 
 	<!--<haxedef name="FLX_NO_GAMEPAD" />-->
 	

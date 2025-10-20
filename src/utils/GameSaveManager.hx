@@ -1,19 +1,30 @@
 package utils;
 
 import haxe.Json;
+#if sys
 import sys.FileSystem;
 import sys.io.File;
-import sys.io.FileInput;
-import sys.io.FileOutput;
+#end
+#if js
+import js.Browser;
+#end
 
 typedef SaveData = {
     var username:String;
     var playTimeSeconds:Int; 
 }
 
+typedef OptionsData =
+{
+	var language:String;
+	var volume:Float;
+}
+
 class GameSaveManager {
     public static var saveDir:String = "saves/";
     public static var fileExt:String = ".ccsave";
+	private static var optionsFile:String = "options.json";
+	private static var optionsKey:String = "cosmic_cities_options";
 
     
     public static var currentSlot:Int = -1;
@@ -23,17 +34,53 @@ class GameSaveManager {
     public static function saveRaw(slotName:String, data:String):Void {
         var path = saveDir + slotName + fileExt;
         #if sys
-        if (!FileSystem.exists(saveDir)) FileSystem.createDirectory(saveDir);
-        File.saveContent(path, data);
+		try
+		{
+			if (!FileSystem.exists(saveDir))
+				FileSystem.createDirectory(saveDir);
+			File.saveContent(path, data);
+		}
+		catch (e:Dynamic)
+		{
+			trace("Error saving raw data: " + e);
+		}
+		#elseif js
+		try
+		{
+			var key = "cosmic_cities_" + slotName;
+			Browser.getLocalStorage().setItem(key, data);
+		}
+		catch (e:Dynamic)
+		{
+			trace("Error saving to localStorage: " + e);
+		}
         #end
     }
 
     public static function loadRaw(slotName:String):Null<String> {
         var path = saveDir + slotName + fileExt;
         #if sys
-        if (FileSystem.exists(path)) {
-            return File.getContent(path);
-        }
+		try
+		{
+			if (FileSystem.exists(path))
+			{
+				return File.getContent(path);
+			}
+		}
+		catch (e:Dynamic)
+		{
+			trace("Error loading raw data: " + e);
+		}
+		#elseif js
+		try
+		{
+			var key = "cosmic_cities_" + slotName;
+			return Browser.getLocalStorage().getItem(key);
+		}
+		catch (e:Dynamic)
+		{
+			trace("Error loading from localStorage: " + e);
+		}
         #end
         return null;
     }
@@ -44,6 +91,9 @@ class GameSaveManager {
         if (FileSystem.exists(path)) {
             FileSystem.deleteFile(path);
         }
+		#elseif js
+		var key = "cosmic_cities_" + slotName;
+		Browser.getLocalStorage().removeItem(key);
         #end
     }
 
@@ -59,6 +109,20 @@ class GameSaveManager {
                 }
             }
         }
+		#elseif js
+		var storage = Browser.getLocalStorage();
+		for (i in 0...storage.length)
+		{
+			var key = storage.key(i);
+			if (key != null && StringTools.startsWith(key, "cosmic_cities_"))
+			{
+				var slotName = key.substr(14);
+				if (StringTools.endsWith(slotName, fileExt))
+				{
+					saves.push(slotName.substr(0, slotName.length - fileExt.length));
+				}
+			}
+		}
         #end
         return saves;
     }
@@ -70,6 +134,9 @@ class GameSaveManager {
     public static function exists(slot:Int):Bool {
         #if sys
         return FileSystem.exists(slotPath(slot));
+		#elseif js
+		var key = "cosmic_cities_" + slotName(slot);
+		return Browser.getLocalStorage().getItem(key) != null;
         #else
         return false;
         #end
@@ -80,6 +147,10 @@ class GameSaveManager {
         if (!FileSystem.exists(saveDir)) FileSystem.createDirectory(saveDir);
         var json = Json.stringify(data);
         File.saveContent(slotPath(slot), json);
+		#elseif js
+		var json = Json.stringify(data);
+		var key = "cosmic_cities_" + slotName(slot);
+		Browser.getLocalStorage().setItem(key, json);
         #end
     }
 
@@ -102,6 +173,28 @@ class GameSaveManager {
                 return null;
             }
         }
+		#elseif js
+		var key = "cosmic_cities_" + slotName(slot);
+		var json = Browser.getLocalStorage().getItem(key);
+		if (json != null)
+		{
+			try
+			{
+				var obj:Dynamic = Json.parse(json);
+				var prev:Null<SaveData> = currentData;
+				var totalTime:Int = obj.playTimeSeconds;
+				if (prev != null && slot == currentSlot)
+				{
+					totalTime += prev.playTimeSeconds;
+				}
+				var d:SaveData = {username: obj.username, playTimeSeconds: totalTime};
+				return d;
+			}
+			catch (_:Dynamic)
+			{
+				return null;
+			}
+		}
         #end
         return null;
     }
@@ -110,6 +203,9 @@ class GameSaveManager {
         #if sys
         var path = slotPath(slot);
         if (FileSystem.exists(path)) FileSystem.deleteFile(path);
+		#elseif js
+		var key = "cosmic_cities_" + slotName(slot);
+		Browser.getLocalStorage().removeItem(key);
         #end
     }
 
@@ -131,4 +227,89 @@ class GameSaveManager {
         function pad(n:Int):String return (n < 10 ? '0' : '') + n;
         return h > 0 ? (pad(h) + ':' + pad(m) + ':' + pad(s)) : (pad(m) + ':' + pad(s));
     }
+	public static function saveOptions(options:OptionsData):Void
+	{
+		#if sys
+		if (!FileSystem.exists(saveDir))
+			FileSystem.createDirectory(saveDir);
+		var json = Json.stringify(options);
+		File.saveContent(saveDir + optionsFile, json);
+		#elseif js
+		var json = Json.stringify(options);
+		Browser.getLocalStorage().setItem(optionsKey, json);
+		#end
+		trace("Options saved: language=" + options.language + " volume=" + options.volume);
+	}
+
+	public static function loadOptions():Null<OptionsData>
+	{
+		#if sys
+		var path = saveDir + optionsFile;
+		if (FileSystem.exists(path))
+		{
+			try
+			{
+				var json = File.getContent(path);
+				var parsed:Dynamic = Json.parse(json);
+				if (parsed != null && parsed.language != null && parsed.volume != null)
+				{
+					var options:OptionsData = {language: parsed.language, volume: parsed.volume};
+					trace("Options loaded from file: language=" + options.language + " volume=" + options.volume);
+					return options;
+				}
+			}
+			catch (_:Dynamic)
+			{
+				trace("Error loading options from file");
+				return null;
+			}
+		}
+		#elseif js
+		var json = Browser.getLocalStorage().getItem(optionsKey);
+		if (json != null)
+		{
+			try
+			{
+				var parsed:Dynamic = Json.parse(json);
+				if (parsed != null && parsed.language != null && parsed.volume != null)
+				{
+					var options:OptionsData = {language: parsed.language, volume: parsed.volume};
+					trace("Options loaded from localStorage: language=" + options.language + " volume=" + options.volume);
+					return options;
+				}
+			}
+			catch (_:Dynamic)
+			{
+				trace("Error loading options from localStorage");
+				return null;
+			}
+		}
+		#end
+		return null;
+	}
+
+	public static function loadOptionsWithDefaults():OptionsData
+	{
+		var options = loadOptions();
+		if (options != null)
+		{
+			return options;
+		}
+		var defaults:OptionsData = {language: "en-US", volume: 1.0};
+		trace("Using default options: language=" + defaults.language + " volume=" + defaults.volume);
+		return defaults;
+	}
+
+	public static function deleteOptions():Void
+	{
+		#if sys
+		var path = saveDir + optionsFile;
+		if (FileSystem.exists(path))
+		{
+			FileSystem.deleteFile(path);
+		}
+		#elseif js
+		Browser.getLocalStorage().removeItem(optionsKey);
+		#end
+	}
 }

@@ -1,8 +1,8 @@
 package entities;
 
+import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.util.FlxColor;
-import flixel.FlxG;
 
 class Player extends FlxSprite {
 	public var debugHitbox:Bool = false;
@@ -13,36 +13,27 @@ class Player extends FlxSprite {
 
         makeGraphic(32, 32, FlxColor.RED);
         
-		var spriteSize = 32;
-		var octagonSize = 24;
-		var cornerCut = 7;
-        
-		setSize(octagonSize, octagonSize);
-        
-		var centerOffset = (spriteSize - octagonSize) / 2;
-		offset.set(centerOffset, centerOffset);
-        
-		origin.set(spriteSize / 2, spriteSize / 2);
-        
-		drag.set(1200, 1200);
+		var hitboxSize = 28;
+		setSize(hitboxSize, hitboxSize);
 		
-		// Create debug sprite for hitbox visualization
+		var centerOffset = (32 - hitboxSize) / 2;
+		offset.set(centerOffset, centerOffset);
+		origin.set(16, 16);
+        
+		drag.set(0, 0);
+		maxVelocity.set(150, 150);
+		
+		solid = true;
+		immovable = false;
+		moves = false;
+
 		debugSprite = new FlxSprite();
-		debugSprite.makeGraphic(Std.int(octagonSize), Std.int(octagonSize), 0x8000FF00); // Semi-transparent green
+		debugSprite.makeGraphic(Std.int(hitboxSize), Std.int(hitboxSize), 0x8000FF00);
 		debugSprite.visible = false;
 	}
     
 	override public function update(elapsed:Float):Void
 	{
-		super.update(elapsed);
-        
-		if (velocity.x != 0 && velocity.y != 0)
-		{
-			velocity.x *= 0.7071;
-			velocity.y *= 0.7071;
-		}
-		
-		// Update debug sprite position to match actual hitbox
 		if (debugSprite != null)
 		{
 			debugSprite.x = x;
@@ -55,8 +46,7 @@ class Player extends FlxSprite {
 	override public function draw():Void
 	{
 		super.draw();
-		
-		// Draw debug hitbox overlay
+
 		if (debugSprite != null && debugSprite.visible)
 		{
 			debugSprite.draw();

@@ -41,7 +41,7 @@ class SaveSelectState extends FlxState {
         var fontString = Main.tongue.getFontData("pixel_operator", 16).name;
         font = new BMFont("assets/fonts/" + fontString + "/" + fontString + ".fnt", "assets/fonts/" + fontString + "/" + fontString + ".png").getFont();
 
-        var title = new FlxBitmapText(0, 0, "Select Save Slot", font);
+		var title = new FlxBitmapText(0, 0, Main.tongue.get("$SAVESELECT_TITLE", "ui"), font);
         title.scale.set(1.2, 1.2);
         title.updateHitbox();
         title.x = (FlxG.width - title.textWidth * title.scale.x) / 2;
@@ -91,7 +91,7 @@ class SaveSelectState extends FlxState {
         slotRects[slot - 1] = {x:x, y:y, w:w, h:h};
 
         if (!GameSaveManager.exists(slot)) {
-            var t = new FlxBitmapText(0, 0, "New Save", font);
+			var t = new FlxBitmapText(0, 0, Main.tongue.get("$SAVESELECT_NEW_SAVE", "ui"), font);
             t.scale.set(1.0, 1.0);
             t.updateHitbox();
             t.x = x + (w - t.textWidth * t.scale.x) / 2;
@@ -139,7 +139,7 @@ class SaveSelectState extends FlxState {
         add(box); g.add(box);
         slotBoxes[slot - 1] = box;
 
-        var prompt = new FlxBitmapText(0, 0, "Enter your name:", font);
+		var prompt = new FlxBitmapText(0, 0, Main.tongue.get("$SAVESELECT_NAME_PROMPT", "ui"), font);
         prompt.scale.set(0.95, 0.95);
         prompt.updateHitbox();
         prompt.x = x + 12; prompt.y = y + 12;
@@ -159,7 +159,7 @@ class SaveSelectState extends FlxState {
         nameEntryText.color = 0xFFFFFFFF;
         add(nameEntryText); g.add(nameEntryText);
 
-        var hint = new FlxBitmapText(0, 0, 'ENTER to confirm  •  ESC to cancel', font);
+		var hint = new FlxBitmapText(0, 0, Main.tongue.get("$SAVESELECT_NAME_HINT", "ui"), font);
         hint.scale.set(0.6, 0.6);
         hint.updateHitbox();
         hint.x = x + 12; hint.y = y + h - 24;
@@ -194,7 +194,7 @@ class SaveSelectState extends FlxState {
         var startX = x + (w - totalW) / 2;
         var btnY = Std.int(y + h * 0.6 - btnH/2);
 
-        var contBtn = new TextButton(startX, btnY, "Continue", font, btnW, btnH);
+		var contBtn = new TextButton(startX, btnY, Main.tongue.get("$SAVESELECT_BTN_CONTINUE", "ui"), font, btnW, btnH);
         contBtn.setCallback(() -> {
             if (haxe.Timer.stamp() < blockButtonsUntil) return;
             var d = GameSaveManager.loadData(slot);
@@ -204,7 +204,7 @@ class SaveSelectState extends FlxState {
         });
         add(contBtn); g.add(contBtn);
 
-        var delBtn = new TextButton(startX + btnW + gap, btnY, "Delete", font, btnW, btnH);
+		var delBtn = new TextButton(startX + btnW + gap, btnY, Main.tongue.get("$SAVESELECT_BTN_DELETE", "ui"), font, btnW, btnH);
         delBtn.setCallback(() -> {
             if (haxe.Timer.stamp() < blockButtonsUntil) return;
             blockButtonsUntil = haxe.Timer.stamp() + 0.15;
@@ -233,14 +233,14 @@ class SaveSelectState extends FlxState {
         add(box); g.add(box);
         slotBoxes[slot - 1] = box;
 
-        var prompt = new FlxBitmapText(0, 0, "Delete this save?", font);
+		var prompt = new FlxBitmapText(0, 0, Main.tongue.get("$SAVESELECT_DELETE_CONFIRM", "ui"), font);
         prompt.scale.set(1.0, 1.0);
         prompt.updateHitbox();
         prompt.x = x + 12; prompt.y = y + 12;
         prompt.color = 0xFFFF4444;
         add(prompt); g.add(prompt);
 
-        var warning = new FlxBitmapText(0, 0, "This cannot be undone!", font);
+		var warning = new FlxBitmapText(0, 0, Main.tongue.get("$SAVESELECT_DELETE_WARNING", "ui"), font);
         warning.scale.set(0.7, 0.7);
         warning.updateHitbox();
         warning.x = x + 12; warning.y = y + 38;
@@ -252,7 +252,7 @@ class SaveSelectState extends FlxState {
         var startX = x + (w - totalW) / 2;
         var btnY = Std.int(y + h * 0.65 - btnH/2);
 
-        var yesBtn = new TextButton(startX, btnY, "Yes, Delete", font, btnW, btnH);
+		var yesBtn = new TextButton(startX, btnY, Main.tongue.get("$SAVESELECT_BTN_YES_DELETE", "ui"), font, btnW, btnH);
         yesBtn.setCallback(() -> {
             if (haxe.Timer.stamp() < blockButtonsUntil) return;
             blockButtonsUntil = haxe.Timer.stamp() + 0.15;
@@ -261,7 +261,7 @@ class SaveSelectState extends FlxState {
         });
         add(yesBtn); g.add(yesBtn);
 
-        var noBtn = new TextButton(startX + btnW + gap, btnY, "Cancel", font, btnW, btnH);
+		var noBtn = new TextButton(startX + btnW + gap, btnY, Main.tongue.get("$SAVESELECT_BTN_CANCEL", "ui"), font, btnW, btnH);
         noBtn.setCallback(() -> {
             if (haxe.Timer.stamp() < blockButtonsUntil) return;
             blockButtonsUntil = haxe.Timer.stamp() + 0.15;
@@ -275,7 +275,7 @@ class SaveSelectState extends FlxState {
     override public function update(dt:Float) {
         super.update(dt);
 
-        
+		#if !android
         if (!nameEntryActive) {
             var mx = FlxG.mouse.x; var my = FlxG.mouse.y;
             for (i in 0...3) {
@@ -347,10 +347,12 @@ class SaveSelectState extends FlxState {
                 }
             }
         }
+		#end
     }
 
     
     function pollTypedChar():Null<String> {
+		#if !android
         
         if (FlxG.keys.justPressed.A) return "A";
         if (FlxG.keys.justPressed.B) return "B";
@@ -394,6 +396,7 @@ class SaveSelectState extends FlxState {
         
         if (FlxG.keys.justPressed.SPACE) return " ";
         if (FlxG.keys.justPressed.MINUS) return "-";
+		#end
         
         return null;
     }

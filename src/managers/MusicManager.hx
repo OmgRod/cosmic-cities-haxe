@@ -1,4 +1,4 @@
-package manager;
+package managers;
 
 import flixel.sound.FlxSound;
 import haxe.ds.StringMap;

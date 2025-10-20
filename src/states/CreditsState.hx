@@ -161,8 +161,10 @@ class CreditsState extends FlxState
 
 		if (offsetY + totalHeight < 0)
 			startFadeToMenu();
+		#if !android
 		if (FlxG.keys.justPressed.ESCAPE)
 			startFadeToMenu();
+		#end
 	}
 
 	function startFadeToMenu()

@@ -2,3 +2,5 @@
 "$CAPTAINRAY_INTRODUCTION_01","欢迎 [color=#4a52e1]登船[/color]。[instant=100]看起来是你第一次[/instant]玩。(按 Enter 继续)"
 "$CAPTAINRAY_INTRODUCTION_02","你想快速了解教程吗？使用左右键选择，然后按 Enter。"
 "$LETTER_FOUND","你已 [color=yellow]找到[/color] 一个 [color=blue]字母[/color]！"
+"$EVACUATION_EVACUATE","所有人从船上撤离"
+"$EVACUATION_GATHER_NOTES","{player_name}，请收集所有的笔记..."
