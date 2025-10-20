@@ -60,6 +60,30 @@ class MusicManager
         }
     }
 
+	public static function pauseAll():Void
+	{
+		if (currentId != null)
+		{
+			var sound = sources.get(currentId);
+			if (sound != null && sound.playing)
+			{
+				sound.pause();
+			}
+		}
+	}
+
+	public static function resumeAll():Void
+	{
+		if (currentId != null)
+		{
+			var sound = sources.get(currentId);
+			if (sound != null && !sound.playing)
+			{
+				sound.play();
+			}
+		}
+	}
+
 	public static function isPlaying(id:String):Bool
 	{
 		var sound = sources.get(id);

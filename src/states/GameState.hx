@@ -13,6 +13,7 @@ import managers.GameManager;
 import managers.InteractionManager;
 import managers.MusicManager;
 import managers.StoryManager;
+import states.LevelSelectState;
 import ui.PauseMenu;
 import ui.backgrounds.Starfield;
 // import ui.menu.ProgressBar;
@@ -64,6 +65,7 @@ class GameState extends FlxState
 		// add(progressBar);
 
 		MusicManager.stop("intro");
+		MusicManager.play("geton");
 
 		gameManager = GameManager.getInstance();
 		eventManager = EventManager.getInstance();
@@ -82,10 +84,12 @@ class GameState extends FlxState
 
 		dialogueManager.startDialogue("tutorial");
 
-		loadMap("assets/maps/ship-main.tmx", "assets/sprites/CC_shipSheet_001.png", null, null);
+		var mapPath = MapSelectState.selectedMap;
+		var tilesetPath = MapSelectState.selectedTileset;
+		loadMap(mapPath, tilesetPath, null, null);
+		gameplayManager.init(this);
 		pauseMenu = new PauseMenu(() -> {}, () -> gameManager.saveGame());
 		add(pauseMenu);
-		gameplayManager.init(this);
 
 		gameplayManager.startEvacuationSequence();
 	}
@@ -173,8 +177,25 @@ class GameState extends FlxState
 		}
 		add(roomSwapGroup);
 
-		var spawnPxX = 2382.0;
-		var spawnPxY = 781.0;
+		gameplayManager.setMapObjectGroups(result.objectGroups);
+
+		var spawnPxX = 0.0;
+		var spawnPxY = 0.0;
+
+		if (result.objectGroups.exists("Metadata"))
+		{
+			var metadataObjects = result.objectGroups.get("Metadata");
+			for (obj in metadataObjects)
+			{
+				if (obj.name == "player-spawn")
+				{
+					spawnPxX = obj.x;
+					spawnPxY = obj.y;
+					trace("Found player spawn point at (" + spawnPxX + ", " + spawnPxY + ")");
+					break;
+				}
+			}
+		}
 
 		if (player == null)
 		{
@@ -216,10 +237,6 @@ class GameState extends FlxState
 
 	override public function update(elapsed:Float):Void
 	{
-		gameplayManager.update(elapsed);
-
-		super.update(elapsed);
-
 		#if !android
 		if (FlxG.keys.justPressed.H)
 		{
@@ -227,7 +244,8 @@ class GameState extends FlxState
 			trace("Debug hitboxes: " + (debugHitboxes ? "ON" : "OFF"));
 		}
 
-		if (FlxG.keys.justPressed.ESCAPE) {
+		if (FlxG.keys.justPressed.ESCAPE && !gameplayManager.isDialogueActive())
+		{
 			pauseMenu.toggle();
 		}
 		#end
@@ -235,8 +253,12 @@ class GameState extends FlxState
 		if (pauseMenu.isPauseActive())
 		{
 			pauseMenu.update(elapsed);
+			super.update(elapsed);
 			return;
 		}
+
+		gameplayManager.update(elapsed);
+		super.update(elapsed);
 
 		var speed = 150;
 		var moveX = 0.0;

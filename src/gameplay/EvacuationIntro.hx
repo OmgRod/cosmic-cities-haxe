@@ -3,10 +3,10 @@ package gameplay;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup;
-import flixel.text.FlxBitmapText;
 import managers.DialogueManager;
 import managers.MusicManager;
-import utils.BMFont;
+import ui.NotesLayer;
+import ui.dialog.DialogBox;
 import utils.GameSaveManager;
 
 class EvacuationIntro
@@ -17,18 +17,18 @@ class EvacuationIntro
 	
 	private var timer:Float = 0.0;
 	private var alarmFlashTimer:Float = 0.0;
-	private var alarmFlashInterval:Float = 0.5;
+	private var alarmFlashInterval:Float = 2.5;
 	private var dialogueShown:Bool = false;
 	private var currentDialogue:Int = 0;
+	private var dialogueEnded:Bool = false;
+	private var hasPlayedOnce:Bool = false;
 	private var musicTransitionStarted:Bool = false;
 	private var musicFadeTimer:Float = 0.0;
 	private var musicFadeDuration:Float = 0.5;
 	
 	private var redOverlay:FlxSprite;
-	private var dialogBox:FlxSprite;
-	private var dialogueText:FlxBitmapText;
-	private var speakerText:FlxBitmapText;
-	private var skipHintText:FlxBitmapText;
+	private var dialogBox:DialogBox;
+	private var notesLayer:NotesLayer;
 	
 	private var group:FlxGroup;
 	private var dialogueManager:DialogueManager;
@@ -53,68 +53,99 @@ class EvacuationIntro
 		redOverlay.scrollFactor.set(0, 0);
 		group.add(redOverlay);
 		
-		dialogBox = new FlxSprite(20, FlxG.height - 140);
-		dialogBox.makeGraphic(FlxG.width - 40, 120, 0xFF1a1a1a);
-		dialogBox.scrollFactor.set(0, 0);
+		dialogBox = new DialogBox();
 		group.add(dialogBox);
-		
-		var font = new BMFont("assets/fonts/pixel_operator/pixel_operator.fnt", "assets/fonts/pixel_operator/pixel_operator.png").getFont();
-		
-		speakerText = new FlxBitmapText(40, FlxG.height - 125, "CAPTAIN RAY:", font);
-		speakerText.color = 0xFFFFFF00;
-		speakerText.scrollFactor.set(0, 0);
-		speakerText.scale.set(0.8, 0.8);
-		group.add(speakerText);
-		
-		dialogueText = new FlxBitmapText(40, FlxG.height - 105, "", font);
-		dialogueText.color = 0xFFFFFFFF;
-		dialogueText.scrollFactor.set(0, 0);
-		dialogueText.scale.set(0.7, 0.7);
-		group.add(dialogueText);
-		
-        skipHintText = new FlxBitmapText(40, FlxG.height - 60, "Press ENTER to continue", font);
-        skipHintText.color = 0xFF888888;
-        skipHintText.scrollFactor.set(0, 0);
-        skipHintText.scale.set(0.6, 0.6);
-        skipHintText.visible = false;
-        group.add(skipHintText);
-		
+
 		isActive = false;
 		isComplete = false;
+		isDialogueActive = true;
+	}
+	
+	public function setObjectGroups(objectGroups:Map<String, Array<Dynamic>>):Void
+	{
+		if (objectGroups.exists("Interactions"))
+		{
+			var interactions = objectGroups.get("Interactions");
+			var letterPuzzles:Array<{x:Float, y:Float, data:String}> = [];
+			
+			for (obj in interactions)
+			{
+				if (obj.name == "letter-puzzle")
+				{
+					var data = obj.properties.get("data");
+					if (data != null)
+					{
+						letterPuzzles.push({
+							x: obj.x,
+							y: obj.y,
+							data: data
+						});
+					}
+				}
+			}
+			
+			if (notesLayer != null)
+				notesLayer.destroy();
+			notesLayer = new NotesLayer();
+			notesLayer.loadNotes(letterPuzzles);
+			group.add(notesLayer);
+		}
 	}
 	
 	public function start():Void
 	{
+		if (hasPlayedOnce)
+			return;
+
 		isActive = true;
+		isComplete = false;
+		isDialogueActive = true;
+		timer = 0.0;
+		alarmFlashTimer = 0.0;
+		dialogueShown = false;
+		currentDialogue = 0;
+		dialogueEnded = false;
+		isTypewriterComplete = false;
+		currentCharIndex = 0;
+		musicTransitionStarted = false;
+		musicFadeTimer = 0.0;
+		redOverlay.visible = true;
+	}
+
+	public function reset():Void
+	{
+		hasPlayedOnce = false;
+		isActive = false;
 		isComplete = false;
 		isDialogueActive = false;
 		timer = 0.0;
 		alarmFlashTimer = 0.0;
 		dialogueShown = false;
 		currentDialogue = 0;
+		dialogueEnded = false;
 		isTypewriterComplete = false;
 		currentCharIndex = 0;
 		musicTransitionStarted = false;
 		musicFadeTimer = 0.0;
+		redOverlay.visible = false;
+		redOverlay.alpha = 0;
+		fullText = "";
+		displayedText = "";
+		typewriterTimer = 0.0;
+		currentCharIndex = 0;
 	}
 	
 	public function update(elapsed:Float):Void
 	{
-		if (!isActive) return;
-		
-		timer += elapsed;
 		alarmFlashTimer += elapsed;
-		
-		// Red flash effect - always update for visual effect (continues even after music starts)
+
 		if (alarmFlashTimer >= alarmFlashInterval)
 		{
 			alarmFlashTimer = 0.0;
-			// Only play alarm sound if music transition hasn't started
-			if (!musicTransitionStarted)
+			if (!dialogueEnded && isActive)
 			{
-				FlxG.sound.play("assets/sounds/sfx.blip.1.wav", 0.6);
+				FlxG.sound.play("assets/sounds/sfx.alarm.1.wav", 0.6);
 			}
-			// Always update visual
 			if (redOverlay.visible)
 			{
 				redOverlay.alpha = 0.6;
@@ -122,55 +153,42 @@ class EvacuationIntro
 		}
 		else if (alarmFlashTimer > alarmFlashInterval * 0.4)
 		{
-			// Fade out the red flash
 			if (redOverlay.visible)
 			{
-				redOverlay.alpha = 0.6 * (1 - ((alarmFlashTimer - alarmFlashInterval * 0.4) / (alarmFlashInterval * 0.6)));
+				var newAlpha = 0.6 * (1 - ((alarmFlashTimer - alarmFlashInterval * 0.4) / (alarmFlashInterval * 0.6)));
+				redOverlay.alpha = newAlpha;
 			}
 		}
 		
-		if (!dialogueShown && timer >= 1.0)
+		if (!isActive || hasPlayedOnce)
+			return;
+
+		timer += elapsed;
+
+		if (!dialogueShown && !dialogueEnded && timer >= 1.0)
 		{
 			dialogueShown = true;
 			startFirstDialogue();
 		}
 		
-		if (dialogueShown && !isTypewriterComplete && dialogBox.visible)
+		if (dialogueShown && !isTypewriterComplete)
 		{
 			isDialogueActive = true;
 			updateTypewriter(elapsed);
-			
-			#if !android
+
 			if (FlxG.keys.justPressed.ENTER)
 			{
-				if (!isTypewriterComplete)
-				{
-					displayedText = fullText;
-					currentCharIndex = fullText.length;
-					isTypewriterComplete = true;
-				}
+				displayedText = fullText;
+				currentCharIndex = fullText.length;
+				isTypewriterComplete = true;
 			}
-			#end
 		}
-		else if (dialogueShown && isTypewriterComplete && dialogBox.visible)
+		else if (dialogueShown && isTypewriterComplete)
 		{
 			isDialogueActive = true;
-			#if !android
 			if (FlxG.keys.justPressed.ENTER)
 			{
 				advanceDialogue();
-			}
-			#end
-		}
-		else
-		{
-			isDialogueActive = false;
-			
-			if (!musicTransitionStarted && dialogueShown && currentDialogue > 1)
-			{
-				musicTransitionStarted = true;
-				musicFadeTimer = 0.0;
-				MusicManager.play("geton");
 			}
 		}
 	}
@@ -188,15 +206,13 @@ class EvacuationIntro
 			currentCharIndex++;
 		}
 		
-		dialogueText.text = displayedText;
+		dialogBox.setDialogue(displayedText);
 		
 		if (currentCharIndex >= fullText.length)
 		{
 			isTypewriterComplete = true;
 			if (currentDialogue < 2)
-			{
-				skipHintText.visible = true;
-			}
+				dialogBox.showSkipHint(true);
 		}
 	}
 	
@@ -208,7 +224,8 @@ class EvacuationIntro
 		currentCharIndex = 0;
 		typewriterTimer = 0.0;
 		isTypewriterComplete = false;
-		skipHintText.visible = false;
+		dialogBox.show();
+		dialogBox.showSkipHint(false);
 	}
 	
 	private function advanceDialogue():Void
@@ -223,34 +240,28 @@ class EvacuationIntro
 			currentCharIndex = 0;
 			typewriterTimer = 0.0;
 			isTypewriterComplete = false;
-			skipHintText.visible = false;
+			dialogBox.showSkipHint(false);
 		}
 		else
 		{
-			dialogBox.visible = false;
-			speakerText.visible = false;
-			dialogueText.visible = false;
-			skipHintText.visible = false;
+			dialogueShown = false;
+			dialogueEnded = true;
+			dialogBox.hide();
+			isDialogueActive = false;
+			isActive = false;
+			isComplete = true;
+			hasPlayedOnce = true;
+			MusicManager.play("geton");
 		}
-	}
-	
-	private function showDialogue():Void
-	{
-		var line1 = "EVERYONE EVACUATE THE SHIP";
-		dialogueText.text = line1;
-		
-		new flixel.util.FlxTimer().start(3.0, function(_) {
-			var line2 = "Captain Nova, please gather all the notes around the\nship to get the code to escape. You have 10 minutes.";
-			dialogueText.text = line2;
-		});
 	}
 	
 	public function destroy():Void
 	{
 		if (redOverlay != null) redOverlay.destroy();
-		if (dialogBox != null) dialogBox.destroy();
-		if (dialogueText != null) dialogueText.destroy();
-		if (speakerText != null) speakerText.destroy();
+		if (dialogBox != null)
+			dialogBox.destroy();
+		if (notesLayer != null)
+			notesLayer.destroy();
 		if (group != null) group.destroy();
 	}
 }

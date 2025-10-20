@@ -8,7 +8,7 @@ import managers.MusicManager;
 import states.MainMenuState;
 import ui.backgrounds.Starfield;
 import utils.BMFont;
-#if (cpp && !android)
+#if (!disable_discord && cpp && !android)
 import cpp.ConstCharStar;
 import cpp.Function;
 import cpp.RawConstPointer;
@@ -93,18 +93,22 @@ class LoadingState extends FlxState
 
     function initDiscordRpc(done:Void->Void):Void
     {
-		#if (cpp && !android)
-        final handlers:DiscordEventHandlers = new DiscordEventHandlers();
-        handlers.ready = Function.fromStaticFunction(onReady);
-        handlers.disconnected = Function.fromStaticFunction(onDisconnected);
-        handlers.errored = Function.fromStaticFunction(onError);
-		Discord.Initialize("1392251941349757110", RawPointer.addressOf(handlers), false, null);
+		#if (!disable_discord && cpp && !android)
+        try {
+            final handlers:DiscordEventHandlers = new DiscordEventHandlers();
+            handlers.ready = Function.fromStaticFunction(onReady);
+            handlers.disconnected = Function.fromStaticFunction(onDisconnected);
+            handlers.errored = Function.fromStaticFunction(onError);
+            Discord.Initialize("1392251941349757110", RawPointer.addressOf(handlers), false, null);
+        } catch (e:Dynamic) {
+            Sys.println('Discord RPC initialization failed: $e');
+        }
 		#end
 
         done();
     }
 
-	#if (cpp && !android)
+	#if (!disable_discord && cpp && !android)
     static function onReady(request:RawConstPointer<DiscordUser>):Void
     {
         final discordPresence = new DiscordRichPresence();

@@ -38,10 +38,24 @@ class GameplayManager
 		group = new FlxGroup();
 		parent.add(group);
 		
+		// Destroy old evacuation intro if it exists
+		if (evacuationIntro != null)
+		{
+			evacuationIntro.destroy();
+		}
+		
 		evacuationIntro = new EvacuationIntro(group);
 		
 		currentSequence = "";
 		isSequencePlaying = false;
+	}
+	
+	public function setMapObjectGroups(objectGroups:Map<String, Array<Dynamic>>):Void
+	{
+		if (evacuationIntro != null)
+		{
+			evacuationIntro.setObjectGroups(objectGroups);
+		}
 	}
 	
 	public function startEvacuationSequence():Void
@@ -56,7 +70,7 @@ class GameplayManager
 	
 	public function update(elapsed:Float):Void
 	{
-		if (evacuationIntro != null && evacuationIntro.isActive)
+		if (evacuationIntro != null)
 		{
 			evacuationIntro.update(elapsed);
 			

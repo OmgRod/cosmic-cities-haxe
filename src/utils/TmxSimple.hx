@@ -27,6 +27,7 @@ typedef TmxLoadResult = {
 			targetX:Float,
 			targetY:Float
 		}>;
+	var objectGroups:Map<String, Array<Dynamic>>;
 }
 
 class TmxSimple {
@@ -51,6 +52,7 @@ class TmxSimple {
 				targetX:Float,
 				targetY:Float
 			}> = [];
+		var objectGroups:Map<String, Array<Dynamic>> = new Map();
         #if sys
         var xmlString = File.getContent(tmxPath);
 		#elseif js
@@ -273,6 +275,50 @@ class TmxSimple {
 					});
 				}
             }
+			else
+			{
+				var groupObjects:Array<Dynamic> = [];
+				for (obj in objGroup.elements())
+				{
+					if (obj.nodeName != "object")
+						continue;
+
+					var objName = obj.get("name");
+					var ox = Std.parseFloat(obj.get("x"));
+					var oy = Std.parseFloat(obj.get("y"));
+					var ow = obj.get("width");
+					var oh = obj.get("height");
+
+					var props:Map<String, String> = new Map();
+					for (propGroup in obj.elements())
+					{
+						if (propGroup.nodeName == "properties")
+						{
+							for (prop in propGroup.elements())
+							{
+								if (prop.nodeName != "property")
+									continue;
+								var pname = prop.get("name");
+								var pval = prop.get("value");
+								if (pname != null && pval != null)
+									props.set(pname, pval);
+							}
+						}
+					}
+
+					groupObjects.push({
+						name: objName,
+						x: ox,
+						y: oy,
+						width: ow != null ? Std.parseFloat(ow) : null,
+						height: oh != null ? Std.parseFloat(oh) : null,
+						properties: props
+					});
+				}
+
+				if (groupName != null && groupName != "")
+					objectGroups.set(groupName, groupObjects);
+			}
         }
         #end
         return {
@@ -284,7 +330,8 @@ class TmxSimple {
             mapWidth: mapW,
             mapHeight: mapH,
 			hitboxes: hitboxes,
-			roomSwaps: roomSwaps
+			roomSwaps: roomSwaps,
+			objectGroups: objectGroups
         };
     }
 

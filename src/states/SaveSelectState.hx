@@ -200,7 +200,7 @@ class SaveSelectState extends FlxState {
             var d = GameSaveManager.loadData(slot);
             if (d == null) d = { username: username, playTimeSeconds: 0 };
             GameSaveManager.setCurrent(slot, d);
-            FlxG.switchState(() -> new GameState());
+			FlxG.switchState(() -> new LevelSelectState());
         });
         add(contBtn); g.add(contBtn);
 

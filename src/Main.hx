@@ -8,6 +8,7 @@ import flixel.FlxGame;
 import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
 import flixel.util.FlxColor;
+import managers.ModLoader;
 import openfl.display.Sprite;
 import openfl.events.Event;
 import openfl.events.KeyboardEvent;
@@ -59,6 +60,8 @@ class Main extends Sprite
 				trace("Newgrounds API initialization warning: " + e);
 			}
 			#end
+
+			ModLoader.init("mods", true);
 
 			FlxG.signals.postStateSwitch.add(setupEscapeQuitText);
 			addChild(new FlxGame(640, 480, LoadingState));

@@ -1,6 +1,6 @@
 package states;
 
-#if (cpp && !android)
+#if (!disable_discord && cpp && !android)
 import Sys;
 import cpp.RawConstPointer;
 import hxdiscord_rpc.Discord;
@@ -15,6 +15,7 @@ import flixel.text.FlxBitmapText;
 import managers.MusicManager;
 import states.CreditsState;
 import states.GameState;
+import states.ModsState;
 import states.OptionsState;
 import ui.SplashTextData;
 import ui.SplashTextUI;
@@ -34,6 +35,7 @@ class MainMenuState extends FlxState
 		buttonCallbacks = new Map();
 		buttonCallbacks.set("start", () -> FlxG.switchState(() -> new SaveSelectState()));
 		buttonCallbacks.set("options", () -> FlxG.switchState(() -> new OptionsState()));
+		buttonCallbacks.set("mods", () -> FlxG.switchState(() -> new ModsState()));
 		buttonCallbacks.set("credits", () -> FlxG.switchState(() -> new CreditsState()));
 
 		#if cpp
@@ -75,6 +77,7 @@ class MainMenuState extends FlxState
 		var buttons = [
 			{id: "start", label: Main.tongue.get("$MENU_START_BUTTON", "ui")},
 			{id: "options", label: Main.tongue.get("$MENU_OPTIONS_BUTTON", "ui")},
+			{id: "mods", label: "Mods"},
 			{id: "credits", label: Main.tongue.get("$MENU_CREDITS_BUTTON", "ui")}
 		];
 
@@ -106,7 +109,7 @@ class MainMenuState extends FlxState
 			buttonGroup.add(btn);
 		}
 
-		#if (cpp && !android)
+		#if (!disable_discord && cpp && !android)
 		final discordPresence = new DiscordRichPresence();
 		discordPresence.largeImageText = "Cosmic Cities";
 		discordPresence.details = "Browsing menus...";
@@ -114,8 +117,8 @@ class MainMenuState extends FlxState
 		discordPresence.largeImageKey = "logo";
 		Discord.UpdatePresence(RawConstPointer.addressOf(discordPresence));
 		#end
-		// var splash = new SplashText(logo, font);
-		// add(splash);
+		var splash = new SplashText(logo, font);
+		add(splash);
 	}
 
 	override public function update(dt:Float):Void

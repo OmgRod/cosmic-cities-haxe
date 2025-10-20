@@ -52,6 +52,7 @@
 	<set name="BUILD_DIR" value="export" />
 	<source path="src" />
 	<assets path="assets" />
+	<assets path="mods" />
 	
 	<!-- _______________________________ Libraries ______________________________ -->
 
@@ -60,7 +61,7 @@
 	<haxelib name="flixel-ui" />
 	<haxelib name="firetongue" />
 	<haxelib name="nape-haxe4" />
-	<haxelib name="hxdiscord_rpc" if="cpp" unless="android" />
+	<haxelib name="hxdiscord_rpc" if="cpp unless android" unless="disable_discord" />
 	<haxelib name="ase" />
 	<haxelib name="actuate" />
 	<haxelib name="polymod" />
@@ -69,6 +70,8 @@
 	<haxelib name="cxx2hx" if="cpp" />
 	
 	<!-- ______________________________ Haxedefines _____________________________ -->
+
+	<haxedef name="disable_discord" unless="enable_discord" />
 	
 	<!--Remove the legacy health system-->
 	<haxedef name="FLX_NO_HEALTH" />

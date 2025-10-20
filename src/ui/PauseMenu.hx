@@ -4,6 +4,7 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup;
 import flixel.text.FlxBitmapText;
+import managers.MusicManager;
 import states.GameState;
 import states.MainMenuState;
 import states.OptionsState;
@@ -87,8 +88,17 @@ class PauseMenu extends FlxGroup
 		isPaused = !isPaused;
 		setVisible(isPaused);
 		
-		if (!isPaused && onResume != null) {
-			onResume();
+		if (isPaused)
+		{
+			MusicManager.pauseAll();
+		}
+		else
+		{
+			MusicManager.resumeAll();
+			if (onResume != null)
+			{
+				onResume();
+			}
 		}
 	}
 	
