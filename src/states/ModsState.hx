@@ -31,7 +31,7 @@ class ModsState extends FlxState
 		font = new BMFont("assets/fonts/" + fontString + "/" + fontString + ".fnt", "assets/fonts/" + fontString + "/" + fontString + ".png").getFont();
 
 		var scaleBig = 1.3;
-		var title = new FlxBitmapText(0, 0, "Mods", font);
+		var title = new FlxBitmapText(0, 0, Main.tongue.get("$MODS_TITLE", "ui"), font);
 		title.scale.set(scaleBig, scaleBig);
 		title.updateHitbox();
 		title.x = Math.floor((FlxG.width - title.frameWidth * scaleBig) / 2);
@@ -72,11 +72,11 @@ class ModsState extends FlxState
 			}
 		}
 
-		var backButton = new TextButton(30, FlxG.height - 60, Main.tongue.get("$BUTTON_BACK", "ui"), font, 100, 40);
+		var backButton = new TextButton(30, FlxG.height - 60, Main.tongue.get("$GENERAL_BACK", "ui"), font, 100, 40);
 		backButton.setCallback(() -> FlxG.switchState(() -> new MainMenuState()));
 		add(backButton);
 
-		var infoText = new FlxBitmapText(0, 0, "Use UP/DOWN to navigate, ENTER to toggle", font);
+		var infoText = new FlxBitmapText(0, 0, Main.tongue.get("$MODS_INSTRUCTIONS", "ui"), font);
 		infoText.scale.set(0.7, 0.7);
 		infoText.updateHitbox();
 		infoText.x = 30;
@@ -93,7 +93,7 @@ class ModsState extends FlxState
 		bg.makeGraphic(Std.int(FlxG.width - 60), Std.int(height), selectedIndex == modIndex ? 0xFF2196F3 : 0xFF333333);
 		modInfoDisplay.add(bg);
 
-		var titleText = new FlxBitmapText(x + 10, y + 5, mod.title + (mod.enabled ? " [ON]" : " [OFF]"), font);
+		var titleText = new FlxBitmapText(x + 10, y + 5, mod.title + (mod.enabled ? " " + Main.tongue.get("$MODS_STATUS_ON", "ui") : " " + Main.tongue.get("$MODS_STATUS_OFF", "ui")), font);
 		titleText.scale.set(0.9, 0.9);
 		titleText.color = 0xFFFFFFFF;
 		modInfoDisplay.add(titleText);

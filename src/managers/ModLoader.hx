@@ -1,5 +1,7 @@
 package managers;
 
+import modding.ModHookLoader;
+
 class ModLoader
 {
 	private static var initialized:Bool = false;
@@ -26,6 +28,7 @@ class ModLoader
 		}
 		
 		trace(modManager.getModsSummary());
+		ModHookLoader.init();
 		
 		initialized = true;
 		trace("=== Mod System Initialized ===");

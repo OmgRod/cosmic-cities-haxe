@@ -20,6 +20,10 @@ class LevelSelectState extends FlxState
 	var descriptionText:FlxBitmapText;
 	var authorText:FlxBitmapText;
 	var selectionMarker:FlxSprite;
+	
+	var buttonStartY:Float = 120;
+	var buttonHeight:Int = 40;
+	var buttonSpacing:Int = 8;
 
 	override public function create()
 	{
@@ -50,7 +54,7 @@ class LevelSelectState extends FlxState
 			noLevelsText.y = 100;
 			add(noLevelsText);
 
-			var backButton = new TextButton(30, FlxG.height - 60, Main.tongue.get("$BUTTON_BACK", "ui"), font, 100, 40);
+			var backButton = new TextButton(30, FlxG.height - 60, Main.tongue.get("$GENERAL_BACK", "ui"), font, 100, 40);
 			backButton.setCallback(() -> FlxG.switchState(() -> new MainMenuState()));
 			add(backButton);
 
@@ -58,9 +62,9 @@ class LevelSelectState extends FlxState
 		}
 
 		levelButtons = [];
-		var buttonStartY = title.y + title.frameHeight + 40;
+		var buttonStartY = 120;
 		var buttonHeight = 40;
-		var buttonSpacing = 5;
+		var buttonSpacing = 8;
 
 		for (i in 0...levels.length)
 		{
@@ -78,27 +82,29 @@ class LevelSelectState extends FlxState
 		selectionMarker.makeGraphic(30, 30, 0xFF2196F3);
 		add(selectionMarker);
 
-		var infoPanelY = buttonStartY + (levels.length * (buttonHeight + buttonSpacing)) + 30;
+		var rightPanelX = 320;
+		var infoPanelY = buttonStartY;
 
-		var descLabel = new FlxBitmapText(40, infoPanelY, "Description:", font);
-		descLabel.scale.set(0.8, 0.8);
+		var descLabel = new FlxBitmapText(rightPanelX, infoPanelY, "Description:", font);
+		descLabel.scale.set(0.9, 0.9);
+		descLabel.color = 0xFFFFFFFF;
 		add(descLabel);
 
-		descriptionText = new FlxBitmapText(40, infoPanelY + 20, "", font);
-		descriptionText.scale.set(0.7, 0.7);
+		descriptionText = new FlxBitmapText(rightPanelX, infoPanelY + 30, "", font);
+		descriptionText.scale.set(0.75, 0.75);
 		descriptionText.color = 0xFFCCCCCC;
 		add(descriptionText);
 
-		authorText = new FlxBitmapText(40, infoPanelY + 60, "", font);
-		authorText.scale.set(0.6, 0.6);
-		authorText.color = 0xFF999999;
+		authorText = new FlxBitmapText(rightPanelX, infoPanelY + 80, "", font);
+		authorText.scale.set(0.7, 0.7);
+		authorText.color = 0xFF888888;
 		add(authorText);
 
 		var startButton = new TextButton(FlxG.width - 250, FlxG.height - 60, "Start Level", font, 100, 40);
 		startButton.setCallback(() -> startSelectedLevel());
 		add(startButton);
 
-		var backButton = new TextButton(30, FlxG.height - 60, Main.tongue.get("$BUTTON_BACK", "ui"), font, 100, 40);
+		var backButton = new TextButton(30, FlxG.height - 60, Main.tongue.get("$GENERAL_BACK", "ui"), font, 100, 40);
 		backButton.setCallback(() -> FlxG.switchState(() -> new MainMenuState()));
 		add(backButton);
 
@@ -162,10 +168,7 @@ class LevelSelectState extends FlxState
 
 		if (selectedIndex >= 0 && selectedIndex < levels.length)
 		{
-			var buttonStartY = 140;
-			var buttonHeight = 40;
-			var buttonSpacing = 5;
-			var newY = buttonStartY + selectedIndex * (buttonHeight + buttonSpacing) + 5;
+			var newY = buttonStartY + selectedIndex * (buttonHeight + buttonSpacing);
 			selectionMarker.y = newY;
 		}
 	}

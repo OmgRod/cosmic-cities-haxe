@@ -16,9 +16,9 @@ import openfl.ui.Keyboard;
 import states.LoadingState;
 import utils.BMFont;
 import utils.GameSaveManager;
-#if js
-import newgrounds.NewgroundsAPI;
-#end
+// #if js
+// import newgrounds.NewgroundsAPI;
+// #end
 
 class Main extends Sprite
 {
@@ -37,6 +37,7 @@ class Main extends Sprite
 		super();
 		try
 		{
+			trace("=== Main.new() starting ===");
 			tongue = new FireTongueEx();
 
 			var savedOptions = GameSaveManager.loadOptionsWithDefaults();
@@ -49,22 +50,35 @@ class Main extends Sprite
 			});
 			trace("FireTongue initialized successfully");
 
-			#if js
-			try
-			{
-				NG.create("61009:R39LSic5");
-				trace("Newgrounds API initialized successfully with app ID 61009");
-			}
-			catch (e:Dynamic)
-			{
-				trace("Newgrounds API initialization warning: " + e);
-			}
-			#end
+	// #if js
+	// try
+	// {
+	// 	NG.create("61009:R39LSic5");
+	// 	trace("Newgrounds API initialized successfully with app ID 61009");
+	// }
+	// catch (e:Dynamic)
+	// {
+	// 	trace("Newgrounds API initialization warning: " + e);
+	// }
+	// #end
 
 			ModLoader.init("mods", true);
-
 			FlxG.signals.postStateSwitch.add(setupEscapeQuitText);
 			addChild(new FlxGame(640, 480, LoadingState));
+
+			#if FLX_SOUND_SYSTEM
+			FlxG.signals.postStateSwitch.addOnce(function() {
+				trace("Applying saved master volume: " + volumeToUse);
+				FlxG.sound.muted = false;
+				FlxG.sound.volume = volumeToUse;
+				FlxG.sound.defaultSoundGroup.volume = volumeToUse;
+				if (FlxG.sound.music != null)
+				{
+					FlxG.sound.music.volume = volumeToUse;
+				}
+			});
+			#end
+
 			#if FLX_SOUND_SYSTEM
 			#if !android
 			FlxG.sound.volumeUpKeys = null;

@@ -7,8 +7,7 @@ import gameplay.EvacuationIntro;
 class GameplayManager
 {
 	private static var instance:GameplayManager;
-	
-	private var group:FlxGroup;
+
 	private var evacuationIntro:EvacuationIntro;
 	
 	private var currentSequence:String = "";
@@ -25,26 +24,35 @@ class GameplayManager
 	
 	public function new()
 	{
-		group = new FlxGroup();
 	}
 	
-	public function init(parent:FlxGroup):Void
+	public function initParsing():Void
 	{
-		if (group != null)
-		{
-			parent.remove(group);
-		}
-		
-		group = new FlxGroup();
-		parent.add(group);
-		
-		// Destroy old evacuation intro if it exists
 		if (evacuationIntro != null)
 		{
 			evacuationIntro.destroy();
 		}
 		
-		evacuationIntro = new EvacuationIntro(group);
+		evacuationIntro = new EvacuationIntro();
+		
+		currentSequence = "";
+		isSequencePlaying = false;
+	}
+
+	public function init(parent:FlxGroup):Void
+	{
+		if (evacuationIntro == null)
+		{
+			evacuationIntro = new EvacuationIntro();
+		}
+		
+		parent.add(evacuationIntro.getChapterOverlay());
+		parent.add(evacuationIntro.getChapterText());
+
+		parent.add(evacuationIntro.getRedOverlay());
+		parent.add(evacuationIntro.getDialogBox());
+		parent.add(evacuationIntro.getTimerBackground());
+		parent.add(evacuationIntro.getTimerDisplay());
 		
 		currentSequence = "";
 		isSequencePlaying = false;
@@ -95,10 +103,48 @@ class GameplayManager
 		}
 		return false;
 	}
+
+	public function isPauseBlocked():Bool
+	{
+		if (evacuationIntro != null)
+		{
+			return evacuationIntro.isPauseBlocked();
+		}
+		return false;
+	}
 	
 	public function getCurrentSequence():String
 	{
 		return currentSequence;
+	}
+	
+	public function getLetterPuzzles():Array<{x:Float, y:Float, data:String}>
+	{
+		if (evacuationIntro != null)
+		{
+			return evacuationIntro.getLetterPuzzles();
+		}
+		return [];
+	}
+
+	public function getEvacuationTimerDisplay():flixel.text.FlxBitmapText
+	{
+		if (evacuationIntro != null)
+		{
+			return evacuationIntro.getTimerDisplay();
+		}
+		return null;
+	}
+
+	public function bringToFront(parent:FlxGroup):Void
+	{
+		if (evacuationIntro != null)
+		{
+			parent.remove(evacuationIntro.getRedOverlay());
+			parent.remove(evacuationIntro.getDialogBox());
+			parent.add(evacuationIntro.getRedOverlay());
+			parent.add(evacuationIntro.getDialogBox());
+		}
 	}
 	
 	public function destroy():Void
@@ -106,10 +152,6 @@ class GameplayManager
 		if (evacuationIntro != null)
 		{
 			evacuationIntro.destroy();
-		}
-		if (group != null)
-		{
-			group.destroy();
 		}
 	}
 }

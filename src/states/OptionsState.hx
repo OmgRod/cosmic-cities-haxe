@@ -6,6 +6,7 @@ import flixel.FlxState;
 import flixel.text.FlxBitmapText;
 import managers.MusicManager;
 import states.options.LanguageOptionsState;
+import states.options.ControlsSettingsState;
 import ui.backgrounds.Starfield;
 import ui.menu.SliderKnob;
 import ui.menu.TextButton;
@@ -74,7 +75,16 @@ class OptionsState extends FlxState
 		});
 		add(langBtn);
 
-		var backBtn = new TextButton((FlxG.width - 150) / 2, FlxG.height - 50, Main.tongue.get("$GENERAL_BACK", "ui"), font, 150, 40);
+		var ctrlBtnY:Float = sliderBar.y + sliderBar.height + 80;
+		var ctrlBtn = new TextButton((FlxG.width - 200) / 2, ctrlBtnY, Main.tongue.get("$SETTING_CONTROLS", "ui"), font, 200, 40);
+		ctrlBtn.setCallback(() ->
+		{
+			FlxG.switchState(() -> new ControlsSettingsState());
+		});
+		add(ctrlBtn);
+
+		var backBtnY:Float = ctrlBtnY + 50;
+		var backBtn = new TextButton((FlxG.width - 150) / 2, backBtnY, Main.tongue.get("$GENERAL_BACK", "ui"), font, 150, 40);
 		backBtn.setCallback(() ->
 		{
 			if (returnState != null)

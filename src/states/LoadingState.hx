@@ -4,6 +4,9 @@ import flixel.FlxG;
 import flixel.FlxState;
 import flixel.text.FlxBitmapText;
 import flixel.ui.FlxBar;
+import modding.ModHookContext;
+import modding.ModHookEvents;
+import modding.ModHooks;
 import managers.MusicManager;
 import states.MainMenuState;
 import ui.backgrounds.Starfield;
@@ -26,6 +29,7 @@ class LoadingState extends FlxState
 	override public function create()
     {
         super.create();
+		ModHooks.run(ModHookEvents.LOADING_CREATE_PRE, new ModHookContext(this));
 
         var starfield = new Starfield();
         add(starfield);
@@ -44,6 +48,12 @@ class LoadingState extends FlxState
         statusText.x = (FlxG.width - statusText.width * statusText.scale.x) / 2;
 		statusText.y = progressBar.y + progressBar.height + 4;
 		add(statusText);
+
+        var postPayload = {
+            progressBar: progressBar,
+            statusText: statusText
+        };
+        ModHooks.run(ModHookEvents.LOADING_CREATE_POST, new ModHookContext(this, postPayload));
         
         runNextStep();
     }
@@ -70,8 +80,8 @@ class LoadingState extends FlxState
 				MusicManager.load("intro", "assets/sounds/music.intro.wav", true);
 				MusicManager.load("intro.old", "assets/sounds/music.intro.old.wav", true);
 				MusicManager.load("geton", "assets/sounds/music.geton.wav", true);
-				MusicManager.load("firstencounter", "assets/sounds/music.firstencounter.mp3", false);
-				MusicManager.load("roundone", "assets/sounds/music.roundone.mp3", true);
+				MusicManager.load("firstencounter", "assets/sounds/music.firstencounter.wav", false);
+				MusicManager.load("roundone", "assets/sounds/music.roundone.wav", true);
 
 				loadingStep++;
                 runNextStep();
@@ -102,6 +112,13 @@ class LoadingState extends FlxState
             Discord.Initialize("1392251941349757110", RawPointer.addressOf(handlers), false, null);
         } catch (e:Dynamic) {
             Sys.println('Discord RPC initialization failed: $e');
+        }
+
+        override public function destroy():Void
+        {
+            ModHooks.run(ModHookEvents.LOADING_DESTROY_PRE, new ModHookContext(this));
+            super.destroy();
+            ModHooks.run(ModHookEvents.LOADING_DESTROY_POST, new ModHookContext(this));
         }
 		#end
 

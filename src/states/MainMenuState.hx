@@ -22,6 +22,9 @@ import ui.SplashTextUI;
 import ui.backgrounds.Starfield;
 import ui.menu.TextButton;
 import utils.BMFont;
+import modding.ModHookContext;
+import modding.ModHookEvents;
+import modding.ModHooks;
 
 class MainMenuState extends FlxState
 {
@@ -31,6 +34,7 @@ class MainMenuState extends FlxState
 	override public function create()
 	{
 		super.create();
+		ModHooks.run(ModHookEvents.MAINMENU_CREATE_PRE, new ModHookContext(this));
 
 		buttonCallbacks = new Map();
 		buttonCallbacks.set("start", () -> FlxG.switchState(() -> new SaveSelectState()));
@@ -119,10 +123,26 @@ class MainMenuState extends FlxState
 		#end
 		var splash = new SplashText(logo, font);
 		add(splash);
+
+		var payload = {
+			logo: logo,
+			buttonGroup: buttonGroup,
+			callbacks: buttonCallbacks
+		};
+		ModHooks.run(ModHookEvents.MAINMENU_CREATE_POST, new ModHookContext(this, payload));
 	}
 
 	override public function update(dt:Float):Void
 	{
+		ModHooks.run(ModHookEvents.MAINMENU_UPDATE_PRE, new ModHookContext(this, {elapsed: dt}));
 		super.update(dt);
+		ModHooks.run(ModHookEvents.MAINMENU_UPDATE_POST, new ModHookContext(this, {elapsed: dt}));
+	}
+
+	override public function destroy():Void
+	{
+		ModHooks.run(ModHookEvents.MAINMENU_DESTROY_PRE, new ModHookContext(this));
+		super.destroy();
+		ModHooks.run(ModHookEvents.MAINMENU_DESTROY_POST, new ModHookContext(this));
 	}
 }

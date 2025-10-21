@@ -18,6 +18,19 @@ typedef OptionsData =
 {
 	var language:String;
 	var volume:Float;
+	var ?controls:ControlsData;
+}
+
+typedef ControlsData =
+{
+	var ?moveLeft:String;
+	var ?moveRight:String;
+	var ?moveUp:String;
+	var ?moveDown:String;
+	var ?skipDialog:String;
+	var ?advanceDialog:String;
+	var ?pause:String;
+	var ?quit:String;
 }
 
 class GameSaveManager {
@@ -254,7 +267,10 @@ class GameSaveManager {
 				if (parsed != null && parsed.language != null && parsed.volume != null)
 				{
 					var options:OptionsData = {language: parsed.language, volume: parsed.volume};
-					trace("Options loaded from file: language=" + options.language + " volume=" + options.volume);
+					if (parsed.controls != null)
+						options.controls = parsed.controls;
+					trace("Options loaded from file: language=" + options.language + " volume=" + options.volume + " controls="
+						+ (options.controls != null ? "yes" : "no"));
 					return options;
 				}
 			}
@@ -274,7 +290,10 @@ class GameSaveManager {
 				if (parsed != null && parsed.language != null && parsed.volume != null)
 				{
 					var options:OptionsData = {language: parsed.language, volume: parsed.volume};
-					trace("Options loaded from localStorage: language=" + options.language + " volume=" + options.volume);
+					if (parsed.controls != null)
+						options.controls = parsed.controls;
+					trace("Options loaded from localStorage: language=" + options.language + " volume=" + options.volume + " controls="
+						+ (options.controls != null ? "yes" : "no"));
 					return options;
 				}
 			}
@@ -311,5 +330,36 @@ class GameSaveManager {
 		#elseif js
 		Browser.getLocalStorage().removeItem(optionsKey);
 		#end
+	}
+	public static function getDefaultControls():ControlsData
+	{
+		return {
+			moveLeft: "LEFT",
+			moveRight: "RIGHT",
+			moveUp: "UP",
+			moveDown: "DOWN",
+			skipDialog: "X",
+			advanceDialog: "ENTER",
+			pause: "P",
+			quit: "BACKSPACE"
+		};
+	}
+
+	public static function getControls():ControlsData
+	{
+		var options = loadOptions();
+		if (options != null && options.controls != null)
+		{
+			return options.controls;
+		}
+		return getDefaultControls();
+	}
+
+	public static function saveControls(controls:ControlsData):Void
+	{
+		var options = loadOptionsWithDefaults();
+		options.controls = controls;
+		saveOptions(options);
+		trace("Controls saved");
 	}
 }

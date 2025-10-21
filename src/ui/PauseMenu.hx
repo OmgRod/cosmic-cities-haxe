@@ -13,7 +13,7 @@ import utils.BMFont;
 
 class PauseMenu extends FlxGroup
 {
-	var overlay:FlxSprite;
+	var overlay:Overlay;
 	var title:FlxBitmapText;
 	var resumeBtn:TextButton;
 	var optionsBtn:TextButton;
@@ -30,9 +30,8 @@ class PauseMenu extends FlxGroup
 		this.onResume = onResume;
 		this.onSave = onSave;
 		
-		overlay = new FlxSprite(0, 0);
-		overlay.makeGraphic(FlxG.width, FlxG.height, 0x88000000);
-		overlay.scrollFactor.set(0, 0);
+		overlay = new Overlay(0xFF000000, 0);
+		overlay.setAlpha(0.7);
 		overlay.visible = false;
 		add(overlay);
 		

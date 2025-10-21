@@ -5,20 +5,29 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.group.FlxGroup;
+import flixel.tweens.FlxTween;
 import flixel.util.FlxDirectionFlags;
 import gameplay.GameplayManager;
+import managers.DialogueBuilder;
 import managers.DialogueManager;
 import managers.EventManager;
 import managers.GameManager;
 import managers.InteractionManager;
 import managers.MusicManager;
+import managers.NoteInventory;
 import managers.StoryManager;
 import states.LevelSelectState;
+import ui.NotesLayer;
+import ui.Overlay;
 import ui.PauseMenu;
 import ui.backgrounds.Starfield;
+import ui.dialog.DialogBox;
 // import ui.menu.ProgressBar;
 import utils.GameSaveManager;
 import utils.TmxSimple;
+import modding.ModHookContext;
+import modding.ModHookEvents;
+import modding.ModHooks;
 
 class GameState extends FlxState
 {
@@ -31,6 +40,7 @@ class GameState extends FlxState
 
 	var mapGroup:FlxGroup;
 	var player:Player;
+	var notesLayer:NotesLayer;
 	var mapWidth:Int = 0;
 	var mapHeight:Int = 0;
 	var walls:Array<FlxSprite>;
@@ -45,6 +55,21 @@ class GameState extends FlxState
 
 	var pauseMenu:PauseMenu;
 	var debugHitboxes:Bool = false;
+	var noteInventory:NoteInventory;
+	var touchingNoteData:String = "";
+
+	var boundingBox:FlxSprite;
+	var touchingBoundingBox:Bool = false;
+	var blackOverlay:Overlay;
+	var orangeOverlay:Overlay;
+	var dialogBox:DialogBox;
+	var isDialogueActive:Bool = false;
+
+	var idleTime:Float = 0.0;
+	var idleThreshold:Float = 10.0;
+	var hasShownIdleMessage:Bool = false;
+
+	var controlBindings:utils.GameSaveManager.ControlsData;
 
 	var hitboxes:Array<
 		{
@@ -57,15 +82,18 @@ class GameState extends FlxState
 	override public function create()
     {
 		super.create();
+		ModHooks.run(ModHookEvents.GAMESTATE_CREATE_PRE, new ModHookContext(this));
 
 		var starfield = new Starfield();
 		add(starfield);
+
+		controlBindings = GameSaveManager.getControls();
+		trace("Loaded controls: moveLeft=" + controlBindings.moveLeft + " moveRight=" + controlBindings.moveRight);
 
 		// var progressBar = new ProgressBar((FlxG.width / 2) - (460 / 2), 32, 460);
 		// add(progressBar);
 
 		MusicManager.stop("intro");
-		MusicManager.play("geton");
 
 		gameManager = GameManager.getInstance();
 		eventManager = EventManager.getInstance();
@@ -73,11 +101,14 @@ class GameState extends FlxState
 		dialogueManager = DialogueManager.getInstance();
 		interactionManager = InteractionManager.getInstance();
 		gameplayManager = GameplayManager.getInstance();
+		noteInventory = NoteInventory.getInstance();
 
-		setupEventListeners();
+		DialogueBuilder.buildAllDialogues();
 
 		var username = (GameSaveManager.currentData != null) ? GameSaveManager.currentData.username : "Player";
 		gameManager.startNewGame(username);
+
+		setupEventListeners();
 
 		storyManager.setChapter("chapter_1");
 		storyManager.setScene("ship_intro");
@@ -86,12 +117,38 @@ class GameState extends FlxState
 
 		var mapPath = MapSelectState.selectedMap;
 		var tilesetPath = MapSelectState.selectedTileset;
+		gameplayManager.initParsing();
+		
 		loadMap(mapPath, tilesetPath, null, null);
+
 		gameplayManager.init(this);
+		blackOverlay = new Overlay(0xFF000000, 0);
+		add(blackOverlay);
+
+		orangeOverlay = new Overlay(0xFFFF8800, 0);
+		add(orangeOverlay);
+
+		dialogBox = new DialogBox();
+		add(dialogBox);
+		
 		pauseMenu = new PauseMenu(() -> {}, () -> gameManager.saveGame());
 		add(pauseMenu);
 
 		gameplayManager.startEvacuationSequence();
+
+		var postPayload = {
+			player: player,
+			mapGroup: mapGroup,
+			wallsGroup: wallsGroup,
+			noteInventory: noteInventory,
+			dialogBox: dialogBox,
+			blackOverlay: blackOverlay,
+			orangeOverlay: orangeOverlay,
+			pauseMenu: pauseMenu,
+			gameplayManager: gameplayManager,
+			eventManager: eventManager
+		};
+		ModHooks.run(ModHookEvents.GAMESTATE_CREATE_POST, new ModHookContext(this, postPayload));
 	}
 
 	private function loadMap(tmxPath:String, tilesetPath:String, playerX:Null<Float>, playerY:Null<Float>):Void
@@ -196,24 +253,62 @@ class GameState extends FlxState
 				}
 			}
 		}
+		loadBoundingBox(result.objectGroups);
 
-		if (player == null)
+		if (player != null)
 		{
-			player = new Player(spawnPxX, spawnPxY);
-			add(player);
+			remove(player);
+			player.destroy();
 		}
+
+		if (notesLayer != null)
+		{
+			remove(notesLayer);
+			notesLayer.destroy();
+		}
+
+		notesLayer = new NotesLayer();
+		add(notesLayer);
+
+		if (gameplayManager != null)
+		{
+			var letterPuzzles = gameplayManager.getLetterPuzzles();
+			if (letterPuzzles != null && letterPuzzles.length > 0)
+			{
+				var availableNotes = [];
+				for (puzzle in letterPuzzles)
+				{
+					if (!noteInventory.hasNote(puzzle.data))
+					{
+						availableNotes.push(puzzle);
+					}
+				}
+
+				if (availableNotes.length > 0)
+				{
+					notesLayer.loadNotes(availableNotes);
+				}
+			}
+		}
+
+		player = new Player(spawnPxX, spawnPxY);
+		add(player);
 		if (playerX != null && playerY != null)
 		{
 			player.x = playerX;
 			player.y = playerY;
 		}
 
-		if (cameraTarget == null)
+		if (cameraTarget != null)
 		{
-			cameraTarget = new FlxSprite(player.x, player.y);
-			cameraTarget.makeGraphic(1, 1, 0x00000000);
-			cameraTarget.visible = false;
+			remove(cameraTarget);
+			cameraTarget.destroy();
 		}
+		
+		cameraTarget = new FlxSprite(player.x, player.y);
+		cameraTarget.makeGraphic(1, 1, 0x00000000);
+		cameraTarget.visible = false;
+		add(cameraTarget);
 		FlxG.camera.follow(cameraTarget);
 		FlxG.camera.setScrollBoundsRect(0, 0, mapWidth, mapHeight);
 	}
@@ -233,10 +328,30 @@ class GameState extends FlxState
 
 		eventManager.on("interact:control_panel", _ -> trace("Control panel opened"));
 		eventManager.on("read:captains_log", _ -> trace("Reading captain's log"));
+		eventManager.on("evacuation_timer_expired", _ ->
+		{
+			if (orangeOverlay != null)
+			{
+				orangeOverlay.visible = true;
+				orangeOverlay.setAlpha(0.5);
+				trace("Timer expired! Orange overlay activated");
+			}
+		});
+	}
+
+	private function showDialogue(speaker:String, text:String):Void
+	{
+		isDialogueActive = true;
+		dialogBox.show(speaker, text, () ->
+		{
+			isDialogueActive = false;
+		});
 	}
 
 	override public function update(elapsed:Float):Void
 	{
+		ModHooks.run(ModHookEvents.GAMESTATE_UPDATE_PRE, new ModHookContext(this, {elapsed: elapsed}));
+
 		#if !android
 		if (FlxG.keys.justPressed.H)
 		{
@@ -244,7 +359,7 @@ class GameState extends FlxState
 			trace("Debug hitboxes: " + (debugHitboxes ? "ON" : "OFF"));
 		}
 
-		if (FlxG.keys.justPressed.ESCAPE && !gameplayManager.isDialogueActive())
+		if (FlxG.keys.justPressed.ESCAPE && !dialogBox.isActive && !gameplayManager.isPauseBlocked())
 		{
 			pauseMenu.toggle();
 		}
@@ -254,29 +369,72 @@ class GameState extends FlxState
 		{
 			pauseMenu.update(elapsed);
 			super.update(elapsed);
+			ModHooks.run(ModHookEvents.GAMESTATE_UPDATE_POST, new ModHookContext(this, {elapsed: elapsed, paused: true}));
 			return;
 		}
 
 		gameplayManager.update(elapsed);
 		super.update(elapsed);
 
-		var speed = 150;
+		var speed = 200;
 		var moveX = 0.0;
 		var moveY = 0.0;
 
 		#if !android
-		if (!gameplayManager.isDialogueActive())
+		if (!gameplayManager.isDialogueActive() && !dialogBox.isActive)
 		{
-			if (FlxG.keys.pressed.LEFT)
+			if (FlxG.keys.pressed.X)
+			{
+				speed = 250;
+			}
+			else
+			{
+				speed = 150;
+			}
+
+			var pressLeft = isKeyPressed(controlBindings.moveLeft);
+			var pressRight = isKeyPressed(controlBindings.moveRight);
+			var pressUp = isKeyPressed(controlBindings.moveUp);
+			var pressDown = isKeyPressed(controlBindings.moveDown);
+
+			if (pressLeft && !pressRight)
+			{
 				moveX = -speed * elapsed;
-			if (FlxG.keys.pressed.RIGHT)
+			}
+			else if (pressRight && !pressLeft)
+			{
 				moveX = speed * elapsed;
-			if (FlxG.keys.pressed.UP)
+			}
+
+			if (pressUp && !pressDown)
+			{
 				moveY = -speed * elapsed;
-			if (FlxG.keys.pressed.DOWN)
+			}
+			else if (pressDown && !pressUp)
+			{
 				moveY = speed * elapsed;
+			}
 		}
 		#end
+
+		var hasMovementInput = isKeyPressed(controlBindings.moveLeft)
+			|| isKeyPressed(controlBindings.moveRight)
+			|| isKeyPressed(controlBindings.moveUp)
+			|| isKeyPressed(controlBindings.moveDown);
+		if (hasMovementInput)
+		{
+			idleTime = 0.0;
+			hasShownIdleMessage = false;
+		}
+		else if (!gameplayManager.isDialogueActive() && !dialogBox.isActive)
+		{
+			idleTime += elapsed;
+			if (idleTime >= idleThreshold && !hasShownIdleMessage)
+			{
+				hasShownIdleMessage = true;
+				showMovementTutorial();
+			}
+		}
 
 		var playerWidth = 28;
 		var playerHeight = 28;
@@ -295,6 +453,16 @@ class GameState extends FlxState
 
 		cameraTarget.x = player.x + player.width / 2;
 		cameraTarget.y = player.y + player.height / 2 - cameraYOffset;
+
+		if (notesLayer != null)
+		{
+			checkNoteCollision();
+		}
+
+		if (boundingBox != null)
+		{
+			checkBoundingBoxCollision();
+		}
 
 		for (swap in roomSwapGroup)
 		{
@@ -319,6 +487,102 @@ class GameState extends FlxState
 				break;
 			}
 		}
+
+		ModHooks.run(ModHookEvents.GAMESTATE_UPDATE_POST, new ModHookContext(this, {
+			elapsed: elapsed,
+			paused: false,
+			moveX: moveX,
+			moveY: moveY
+		}));
+	}
+
+	private function checkNoteCollision():Void
+	{
+		var noteBounds = notesLayer.getNoteBounds();
+		touchingNoteData = "";
+
+		for (bounds in noteBounds)
+		{
+			if (player.overlaps(bounds))
+			{
+				var boundsMap = notesLayer.getNoteBoundsMap();
+				for (noteData => noteBound in boundsMap)
+				{
+					if (noteBound == bounds)
+					{
+						touchingNoteData = noteData;
+
+						if (FlxG.keys.justPressed.ENTER)
+						{
+							collectNote(noteData);
+						}
+						break;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	private function collectNote(noteData:String):Void
+	{
+		if (noteInventory.addNote(noteData))
+		{
+			var blipNum = FlxG.random.int(1, 5);
+			FlxG.sound.play("assets/sounds/sfx.blip." + blipNum + ".wav", 0.7);
+
+			notesLayer.collectNote(noteData);
+
+			var count = noteInventory.getCount();
+			var template = Main.tongue.get("$NOTE_COLLECTED", "dialog");
+			var dialogueText:String = untyped (template);
+
+			if (dialogueText.indexOf("{count}") >= 0)
+			{
+				dialogueText = StringTools.replace(dialogueText, "{count}", Std.string(count));
+			}
+
+			showDialogue("SYSTEM", dialogueText);
+		}
+		touchingNoteData = "";
+	}
+
+	private function checkBoundingBoxCollision():Void
+	{
+		touchingBoundingBox = false;
+
+		if (boundingBox == null)
+		{
+			return;
+		}
+
+		if (player.overlaps(boundingBox))
+		{
+			if (!noteInventory.isFull())
+			{
+				if (FlxG.keys.justPressed.ENTER)
+				{
+					var blipNum = FlxG.random.int(1, 5);
+					FlxG.sound.play("assets/sounds/sfx.blip." + blipNum + ".wav", 0.7);
+					var dialogueText = Main.tongue.get("$COLLECT_ALL_NOTES", "dialog");
+					showDialogue("SYSTEM", dialogueText);
+				}
+				return;
+			}
+
+			touchingBoundingBox = true;
+
+			if (FlxG.keys.justPressed.ENTER)
+			{
+				var blipNum = FlxG.random.int(1, 5);
+				FlxG.sound.play("assets/sounds/sfx.blip." + blipNum + ".wav", 0.7);
+
+				if (blackOverlay != null)
+				{
+					FlxTween.tween(blackOverlay, {alpha: 1}, 1.0);
+				}
+			}
+		}
 	}
 
 	private function toggleHitboxVisibility():Void
@@ -341,12 +605,39 @@ class GameState extends FlxState
 		{
 			swap.visible = debugHitboxes;
 		}
+		if (boundingBox != null)
+		{
+			boundingBox.visible = debugHitboxes;
+		}
 	}
 
 	override public function destroy():Void
 	{
+		var payload = {
+			player: player,
+			gameplayManager: gameplayManager,
+			pauseMenu: pauseMenu,
+			dialogBox: dialogBox
+		};
+		ModHooks.run(ModHookEvents.GAMESTATE_DESTROY_PRE, new ModHookContext(this, payload));
 		MusicManager.stop("geton");
 		super.destroy();
+		ModHooks.run(ModHookEvents.GAMESTATE_DESTROY_POST, new ModHookContext(this, payload));
+	}
+
+	private function showMovementTutorial():Void
+	{
+		var options = GameSaveManager.loadOptionsWithDefaults();
+		var locale = options.language;
+		var prevLocale = Main.tongue.locale;
+		Main.tongue.initialize({locale: locale});
+		var tutorialMessage = Main.tongue.get("$MOVEMENT_TUTORIAL", "dialog");
+		Main.tongue.initialize({locale: prevLocale});
+
+		if (tutorialMessage != null && tutorialMessage.length > 0)
+		{
+			dialogBox.show("System", tutorialMessage, null);
+		}
 	}
 
 	function checkCollision(testX:Float, testY:Float, testWidth:Float, testHeight:Float):Bool
@@ -364,5 +655,116 @@ class GameState extends FlxState
 	inline function rectsOverlap(x1:Float, y1:Float, w1:Float, h1:Float, x2:Float, y2:Float, w2:Float, h2:Float):Bool
 	{
 		return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
+	}
+	private function loadBoundingBox(objectGroups:Map<String, Array<Dynamic>>):Void
+	{
+		if (boundingBox != null)
+		{
+			remove(boundingBox);
+			boundingBox.destroy();
+			boundingBox = null;
+		}
+
+		touchingBoundingBox = false;
+
+		if (objectGroups.exists("Interactions"))
+		{
+			var interactions = objectGroups.get("Interactions");
+			for (obj in interactions)
+			{
+				if (obj.name == "bounding-box")
+				{
+					boundingBox = new FlxSprite(obj.x, obj.y);
+					boundingBox.makeGraphic(Std.int(obj.width), Std.int(obj.height), 0x80FF00FF);
+					boundingBox.immovable = true;
+					boundingBox.moves = false;
+					boundingBox.visible = debugHitboxes;
+					boundingBox.setSize(Std.int(obj.width), Std.int(obj.height));
+					boundingBox.updateHitbox();
+
+					add(boundingBox);
+					break;
+				}
+			}
+		}
+	}
+
+	private function isKeyPressed(keyName:String):Bool
+	{
+		if (keyName == null)
+			return false;
+
+		return switch (keyName.toUpperCase())
+		{
+			case "LEFT": FlxG.keys.pressed.LEFT;
+			case "RIGHT": FlxG.keys.pressed.RIGHT;
+			case "UP": FlxG.keys.pressed.UP;
+			case "DOWN": FlxG.keys.pressed.DOWN;
+			case "X": FlxG.keys.pressed.X;
+			case "ENTER": FlxG.keys.pressed.ENTER;
+			case "SPACE": FlxG.keys.pressed.SPACE;
+			case "ESCAPE": FlxG.keys.pressed.ESCAPE;
+			case "P": FlxG.keys.pressed.P;
+			case "BACKSPACE": FlxG.keys.pressed.BACKSPACE;
+			case "TAB": FlxG.keys.pressed.TAB;
+			case "SHIFT": FlxG.keys.pressed.SHIFT;
+			case "ALT": FlxG.keys.pressed.ALT;
+			case "1": FlxG.keys.pressed.ONE;
+			case "2": FlxG.keys.pressed.TWO;
+			case "3": FlxG.keys.pressed.THREE;
+			case "4": FlxG.keys.pressed.FOUR;
+			case "5": FlxG.keys.pressed.FIVE;
+			case "6": FlxG.keys.pressed.SIX;
+			case "7": FlxG.keys.pressed.SEVEN;
+			case "8": FlxG.keys.pressed.EIGHT;
+			case "9": FlxG.keys.pressed.NINE;
+			case "0": FlxG.keys.pressed.ZERO;
+			case "A": FlxG.keys.pressed.A;
+			case "B": FlxG.keys.pressed.B;
+			case "C": FlxG.keys.pressed.C;
+			case "D": FlxG.keys.pressed.D;
+			case "E": FlxG.keys.pressed.E;
+			case "F": FlxG.keys.pressed.F;
+			case "G": FlxG.keys.pressed.G;
+			case "H": FlxG.keys.pressed.H;
+			case "I": FlxG.keys.pressed.I;
+			case "J": FlxG.keys.pressed.J;
+			case "K": FlxG.keys.pressed.K;
+			case "L": FlxG.keys.pressed.L;
+			case "M": FlxG.keys.pressed.M;
+			case "N": FlxG.keys.pressed.N;
+			case "O": FlxG.keys.pressed.O;
+			case "Q": FlxG.keys.pressed.Q;
+			case "R": FlxG.keys.pressed.R;
+			case "S": FlxG.keys.pressed.S;
+			case "T": FlxG.keys.pressed.T;
+			case "U": FlxG.keys.pressed.U;
+			case "V": FlxG.keys.pressed.V;
+			case "W": FlxG.keys.pressed.W;
+			case "Y": FlxG.keys.pressed.Y;
+			case "Z": FlxG.keys.pressed.Z;
+			case "F1": FlxG.keys.pressed.F1;
+			case "F2": FlxG.keys.pressed.F2;
+			case "F3": FlxG.keys.pressed.F3;
+			case "F4": FlxG.keys.pressed.F4;
+			case "F5": FlxG.keys.pressed.F5;
+			case "F6": FlxG.keys.pressed.F6;
+			case "F7": FlxG.keys.pressed.F7;
+			case "F8": FlxG.keys.pressed.F8;
+			case "F9": FlxG.keys.pressed.F9;
+			case "F10": FlxG.keys.pressed.F10;
+			case "F11": FlxG.keys.pressed.F11;
+			case "F12": FlxG.keys.pressed.F12;
+			case ",": FlxG.keys.pressed.COMMA;
+			case ".": FlxG.keys.pressed.PERIOD;
+			case ";": FlxG.keys.pressed.SEMICOLON;
+			case "'": FlxG.keys.pressed.QUOTE;
+			case "[": FlxG.keys.pressed.LBRACKET;
+			case "]": FlxG.keys.pressed.RBRACKET;
+			case "\\": FlxG.keys.pressed.BACKSLASH;
+			case "/": FlxG.keys.pressed.SLASH;
+			case "-": FlxG.keys.pressed.MINUS;
+			case _: false;
+		};
 	}
 }

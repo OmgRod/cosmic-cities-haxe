@@ -1,6 +1,11 @@
 "flag","content"
 "$CAPTAINRAY_INTRODUCTION_01","[color=#4a52e1]탑승[/color]을 환영합니다. [instant=100]처음[/instant] 플레이하시는 것 같네요. (계속하려면 Enter를 누르세요)"
 "$CAPTAINRAY_INTRODUCTION_02","간단한 튜토리얼을 진행하시겠습니까? 좌우 키로 선택한 뒤 Enter를 누르세요."
+"$TUTORIAL_INTERACTION","빛나는 물체가 보이면 그 옆에 서서 Enter를 누르면 상호작용하거나 수집할 수 있습니다."
 "$LETTER_FOUND","[color=yellow]문자[/color]를 [color=blue]찾았습니다[/color]!"
-"$EVACUATION_EVACUATE","모두 배에서 대피하세요"
-"$EVACUATION_GATHER_NOTES","{player_name}님, 모든 메모를 모아주세요..."
+"$EVACUATION_EVACUATE","긴급 상황! 즉시 배를 대피하세요!"
+"$EVACUATION_GATHER_NOTES","모두, 배가 폭발하기까지 5분 남았습니다. {player}, 배 곳곳에 흩어져 있는 편지들을 모아주세요. 탈출 코드가 담겨 있습니다."
+"$NOTE_COLLECTED","6개 편지 중 {count}개를 모았습니다!"
+"$COLLECT_ALL_NOTES","배가 폭발하기 전에 모든 편지를 수집하세요!"
+"$MOVEMENT_TUTORIAL","[color=yellow]팁:[/color] 화살표 키를 사용하여 배 주변을 이동하세요. 모든 편지를 수집하는 것을 잊지 마세요!"
+
