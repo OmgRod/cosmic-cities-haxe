@@ -13,6 +13,9 @@ import flixel.group.FlxGroup;
 import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
 import managers.MusicManager;
+import modding.ModHookContext;
+import modding.ModHookEvents;
+import modding.ModHooks;
 import states.CreditsState;
 import states.GameState;
 import states.ModsState;
@@ -22,9 +25,6 @@ import ui.SplashTextUI;
 import ui.backgrounds.Starfield;
 import ui.menu.TextButton;
 import utils.BMFont;
-import modding.ModHookContext;
-import modding.ModHookEvents;
-import modding.ModHooks;
 
 class MainMenuState extends FlxState
 {

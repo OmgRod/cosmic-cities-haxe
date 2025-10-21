@@ -16,6 +16,9 @@ import managers.InteractionManager;
 import managers.MusicManager;
 import managers.NoteInventory;
 import managers.StoryManager;
+import modding.ModHookContext;
+import modding.ModHookEvents;
+import modding.ModHooks;
 import states.LevelSelectState;
 import ui.NotesLayer;
 import ui.Overlay;
@@ -25,9 +28,6 @@ import ui.dialog.DialogBox;
 // import ui.menu.ProgressBar;
 import utils.GameSaveManager;
 import utils.TmxSimple;
-import modding.ModHookContext;
-import modding.ModHookEvents;
-import modding.ModHooks;
 
 class GameState extends FlxState
 {

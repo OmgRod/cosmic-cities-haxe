@@ -1,13 +1,13 @@
 package modding;
 
+import ModHooks;
+import StringTools;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup;
 import flixel.text.FlxBitmapText;
 import flixel.util.FlxColor;
 import hscript.Interp;
-import ModHooks;
-import StringTools;
 
 class ModScriptBindings
 {

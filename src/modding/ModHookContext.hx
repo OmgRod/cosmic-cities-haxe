@@ -1,7 +1,7 @@
 package modding;
 
-import flixel.FlxState;
 import flixel.FlxBasic;
+import flixel.FlxState;
 
 class ModHookContext
 {

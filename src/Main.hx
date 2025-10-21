@@ -9,6 +9,7 @@ import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
 import flixel.util.FlxColor;
 import managers.ModLoader;
+// import newgrounds.NewgroundsAPI;
 import openfl.display.Sprite;
 import openfl.events.Event;
 import openfl.events.KeyboardEvent;
@@ -17,7 +18,6 @@ import states.LoadingState;
 import utils.BMFont;
 import utils.GameSaveManager;
 // #if js
-// import newgrounds.NewgroundsAPI;
 // #end
 
 class Main extends Sprite
