@@ -8,7 +8,7 @@ class ModHookContext
 	public var state:FlxState;
 	public var payload:Dynamic;
 	public var cancelled:Bool = false;
-	public var activeModId(default, null):String;
+	public var activeModId:String;
 
 	public function new(state:FlxState, ?payload:Dynamic)
 	{

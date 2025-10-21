@@ -65,6 +65,7 @@
 	<haxelib name="ase" />
 	<haxelib name="actuate" />
 	<haxelib name="polymod" />
+	<haxelib name="hscript" />
 	<haxelib name="newgrounds" if="html5" />
 	<haxelib name="hxcpp" if="cpp" />
 	<haxelib name="cxx2hx" if="cpp" />
