@@ -18,13 +18,15 @@ import modding.ModHookEvents;
 import modding.ModHooks;
 import states.CreditsState;
 import states.GameState;
-import states.ModsState;
 import states.OptionsState;
 import ui.SplashTextData;
 import ui.SplashTextUI;
 import ui.backgrounds.Starfield;
 import ui.menu.TextButton;
 import utils.BMFont;
+#if desktop
+import states.ModsState;
+#end
 
 class MainMenuState extends FlxState
 {
@@ -39,7 +41,9 @@ class MainMenuState extends FlxState
 		buttonCallbacks = new Map();
 		buttonCallbacks.set("start", () -> FlxG.switchState(() -> new SaveSelectState()));
 		buttonCallbacks.set("options", () -> FlxG.switchState(() -> new OptionsState()));
+		#if desktop
 		buttonCallbacks.set("mods", () -> FlxG.switchState(() -> new ModsState()));
+		#end
 		buttonCallbacks.set("credits", () -> FlxG.switchState(() -> new CreditsState()));
 
 		#if cpp
@@ -81,7 +85,9 @@ class MainMenuState extends FlxState
 		var buttons = [
 			{id: "start", label: Main.tongue.get("$MENU_START_BUTTON", "ui")},
 			{id: "options", label: Main.tongue.get("$MENU_OPTIONS_BUTTON", "ui")},
+			#if desktop
 			{id: "mods", label: "Mods"},
+			#end
 			{id: "credits", label: Main.tongue.get("$MENU_CREDITS_BUTTON", "ui")}
 		];
 
@@ -142,6 +148,8 @@ class MainMenuState extends FlxState
 	override public function destroy():Void
 	{
 		ModHooks.run(ModHookEvents.MAINMENU_DESTROY_PRE, new ModHookContext(this));
+		MusicManager.stop("intro");
+		
 		super.destroy();
 		ModHooks.run(ModHookEvents.MAINMENU_DESTROY_POST, new ModHookContext(this));
 	}

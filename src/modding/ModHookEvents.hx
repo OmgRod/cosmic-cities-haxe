@@ -34,4 +34,48 @@ class ModHookEvents
 	public static inline var CREDITS_UPDATE_POST = "credits.update.post";
 	public static inline var CREDITS_DESTROY_PRE = "credits.destroy.pre";
 	public static inline var CREDITS_DESTROY_POST = "credits.destroy.post";
+	public static inline var SAVESELECT_CREATE_PRE = "saveselect.create.pre";
+	public static inline var SAVESELECT_CREATE_POST = "saveselect.create.post";
+	public static inline var SAVESELECT_UPDATE_PRE = "saveselect.update.pre";
+	public static inline var SAVESELECT_UPDATE_POST = "saveselect.update.post";
+	public static inline var SAVESELECT_DESTROY_PRE = "saveselect.destroy.pre";
+	public static inline var SAVESELECT_DESTROY_POST = "saveselect.destroy.post";
+
+	public static inline var MODSSTATE_CREATE_PRE = "modsstate.create.pre";
+	public static inline var MODSSTATE_CREATE_POST = "modsstate.create.post";
+	public static inline var MODSSTATE_UPDATE_PRE = "modsstate.update.pre";
+	public static inline var MODSSTATE_UPDATE_POST = "modsstate.update.post";
+	public static inline var MODSSTATE_DESTROY_PRE = "modsstate.destroy.pre";
+	public static inline var MODSSTATE_DESTROY_POST = "modsstate.destroy.post";
+
+	public static inline var LEVELSELECT_CREATE_PRE = "levelselect.create.pre";
+	public static inline var LEVELSELECT_CREATE_POST = "levelselect.create.post";
+	public static inline var LEVELSELECT_UPDATE_PRE = "levelselect.update.pre";
+	public static inline var LEVELSELECT_UPDATE_POST = "levelselect.update.post";
+	public static inline var LEVELSELECT_DESTROY_PRE = "levelselect.destroy.pre";
+	public static inline var LEVELSELECT_DESTROY_POST = "levelselect.destroy.post";
+
+	public static inline var PAUSEMENU_CREATE_PRE = "pausemenu.create.pre";
+	public static inline var PAUSEMENU_CREATE_POST = "pausemenu.create.post";
+	public static inline var PAUSEMENU_UPDATE_PRE = "pausemenu.update.pre";
+	public static inline var PAUSEMENU_UPDATE_POST = "pausemenu.update.post";
+	public static inline var PAUSEMENU_DESTROY_PRE = "pausemenu.destroy.pre";
+	public static inline var PAUSEMENU_DESTROY_POST = "pausemenu.destroy.post";
+
+	public static inline var DIALOGBOX_CREATE_PRE = "dialogbox.create.pre";
+	public static inline var DIALOGBOX_CREATE_POST = "dialogbox.create.post";
+	public static inline var DIALOGBOX_SHOW_PRE = "dialogbox.show.pre";
+	public static inline var DIALOGBOX_SHOW_POST = "dialogbox.show.post";
+	public static inline var DIALOGBOX_CLOSE_PRE = "dialogbox.close.pre";
+	public static inline var DIALOGBOX_CLOSE_POST = "dialogbox.close.post";
+
+	public static inline var STATE_CREATE_PRE = "state.create.pre";
+	public static inline var STATE_CREATE_POST = "state.create.post";
+	public static inline var STATE_UPDATE_PRE = "state.update.pre";
+	public static inline var STATE_UPDATE_POST = "state.update.post";
+	public static inline var STATE_DESTROY_PRE = "state.destroy.pre";
+	public static inline var STATE_DESTROY_POST = "state.destroy.post";
+	public static inline var STATE_DRAW_PRE = "state.draw.pre";
+	public static inline var STATE_DRAW_POST = "state.draw.post";
 }
+

@@ -9,7 +9,7 @@ import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
 import flixel.util.FlxColor;
 import managers.ModLoader;
-// import newgrounds.NewgroundsAPI;
+import managers.ModManager;
 import openfl.display.Sprite;
 import openfl.events.Event;
 import openfl.events.KeyboardEvent;
@@ -17,6 +17,10 @@ import openfl.ui.Keyboard;
 import states.LoadingState;
 import utils.BMFont;
 import utils.GameSaveManager;
+#if js
+import utils.NGConfig;
+import utils.NGHelper;
+#end
 // #if js
 // #end
 
@@ -50,19 +54,21 @@ class Main extends Sprite
 			});
 			trace("FireTongue initialized successfully");
 
-	// #if js
-	// try
-	// {
-	// 	NG.create("61009:R39LSic5");
-	// 	trace("Newgrounds API initialized successfully with app ID 61009");
-	// }
-	// catch (e:Dynamic)
-	// {
-	// 	trace("Newgrounds API initialization warning: " + e);
-	// }
-	// #end
+			#if js
+			#if NG_USE_B64
+			NGHelper.initEncoded(NGConfig.APP_ID_AND_KEY_B64, NGConfig.ENC_KEY_B64);
+			#else
+			NGHelper.init(NGConfig.APP_ID_AND_KEY, NGConfig.ENC_KEY_FOR_SETUP);
+			#end
+			#end
 
+			#if desktop
 			ModLoader.init("mods", true);
+			tongue.reloadModLocales(localeToUse);
+			var __modMan = ModManager.getInstance();
+			__modMan.onModLoaded.add(function() tongue.reloadModLocales(localeToUse));
+			__modMan.onModUnloaded.add(function() tongue.reloadModLocales(localeToUse));
+			#end
 			FlxG.signals.postStateSwitch.add(setupEscapeQuitText);
 			addChild(new FlxGame(640, 480, LoadingState));
 

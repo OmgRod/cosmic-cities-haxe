@@ -20,10 +20,32 @@ class ModLoader
 		
 		if (autoEnableAll)
 		{
-			var allMods = modManager.getAllMods();
-			for (modId in allMods.keys())
+			var order = modManager.computeLoadOrder();
+			var enabled:Array<String> = [];
+			for (modId in order)
 			{
-				modManager.enableMod(modId);
+				var m = modManager.getModData(modId);
+				var hasConflict = false;
+				if (m != null && m.conflicts != null)
+				{
+					for (c in m.conflicts)
+					{
+						if (enabled.indexOf(c) != -1)
+						{
+							hasConflict = true;
+							break;
+						}
+					}
+				}
+				if (hasConflict)
+				{
+					trace('[Mods] Skipping ' + modId + ' due to conflict with an already enabled mod');
+					continue;
+				}
+				if (modManager.enableMod(modId))
+				{
+					enabled.push(modId);
+				}
 			}
 		}
 		

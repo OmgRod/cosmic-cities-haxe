@@ -54,6 +54,12 @@
 	<assets path="assets" />
 	<assets path="mods" />
 	
+	<!-- _________________________ Mod Classes (Optional) ________________________ -->
+	<!-- Uncomment to compile mod classes (CustomMenuState, etc.) -->
+	<!-- WARNING: Only enable mods you trust! Compiled classes have full access. -->
+	<source path="mods/example-mod/classes" if="desktop" />
+	<!-- <source path="mods/your-mod-name/classes" if="desktop" /> -->
+	
 	<!-- _______________________________ Libraries ______________________________ -->
 
 	<haxelib name="flixel" />
@@ -69,6 +75,13 @@
 	<haxelib name="newgrounds" if="html5" />
 	<haxelib name="hxcpp" if="cpp" />
 	<haxelib name="cxx2hx" if="cpp" />
+	<section if="steam">
+		<setenv name="STEAM_APP_ID" value="480" />
+		<!-- <set name="APP_FILE" value="??????" /> -->
+		
+		<haxelib name="steamwrap"/>
+		<haxelib name="steamwrap"/>
+	</section>
 	
 	<!-- ______________________________ Haxedefines _____________________________ -->
 

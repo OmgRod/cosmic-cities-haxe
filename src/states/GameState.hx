@@ -1,13 +1,18 @@
 package states;
 
+import ase.Ase;
 import entities.Player;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
+import flixel.graphics.FlxGraphic;
+import flixel.graphics.frames.FlxFramesCollection;
 import flixel.group.FlxGroup;
+import flixel.math.FlxRect;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxDirectionFlags;
 import gameplay.GameplayManager;
+import haxe.io.Bytes;
 import managers.DialogueBuilder;
 import managers.DialogueManager;
 import managers.EventManager;
@@ -19,6 +24,7 @@ import managers.StoryManager;
 import modding.ModHookContext;
 import modding.ModHookEvents;
 import modding.ModHooks;
+import openfl.display.BitmapData;
 import states.LevelSelectState;
 import ui.NotesLayer;
 import ui.Overlay;
@@ -62,8 +68,11 @@ class GameState extends FlxState
 	var touchingBoundingBox:Bool = false;
 	var blackOverlay:Overlay;
 	var orangeOverlay:Overlay;
+	var shipExplosionSprite:FlxSprite;
 	var dialogBox:DialogBox;
 	var isDialogueActive:Bool = false;
+	var dialogCooldown:Float = 0.0;
+	var enterPressedInBoundingBox:Bool = false;
 
 	var idleTime:Float = 0.0;
 	var idleThreshold:Float = 10.0;
@@ -94,6 +103,8 @@ class GameState extends FlxState
 		// add(progressBar);
 
 		MusicManager.stop("intro");
+		FlxG.sound.music?.stop();
+		FlxG.sound.music = null;
 
 		gameManager = GameManager.getInstance();
 		eventManager = EventManager.getInstance();
@@ -127,6 +138,12 @@ class GameState extends FlxState
 
 		orangeOverlay = new Overlay(0xFFFF8800, 0);
 		add(orangeOverlay);
+
+		shipExplosionSprite = createShipExplosionSprite();
+		if (shipExplosionSprite != null)
+		{
+			add(shipExplosionSprite);
+		}
 
 		dialogBox = new DialogBox();
 		add(dialogBox);
@@ -330,11 +347,22 @@ class GameState extends FlxState
 		eventManager.on("read:captains_log", _ -> trace("Reading captain's log"));
 		eventManager.on("evacuation_timer_expired", _ ->
 		{
+			trace("Timer expired! Playing ship explosion animation");
+			
 			if (orangeOverlay != null)
 			{
-				orangeOverlay.visible = true;
-				orangeOverlay.setAlpha(0.5);
-				trace("Timer expired! Orange overlay activated");
+				orangeOverlay.visible = false;
+			}
+
+			if (shipExplosionSprite != null)
+			{
+				shipExplosionSprite.visible = true;
+				shipExplosionSprite.animation.play("explode");
+
+				shipExplosionSprite.animation.finishCallback = function(name:String)
+				{
+					trace("Ship explosion animation finished!");
+				};
 			}
 		});
 	}
@@ -351,6 +379,11 @@ class GameState extends FlxState
 	override public function update(elapsed:Float):Void
 	{
 		ModHooks.run(ModHookEvents.GAMESTATE_UPDATE_PRE, new ModHookContext(this, {elapsed: elapsed}));
+
+		if (dialogCooldown > 0)
+		{
+			dialogCooldown -= elapsed;
+		}
 
 		#if !android
 		if (FlxG.keys.justPressed.H)
@@ -558,22 +591,30 @@ class GameState extends FlxState
 
 		if (player.overlaps(boundingBox))
 		{
+			if (!FlxG.keys.pressed.ENTER)
+			{
+				enterPressedInBoundingBox = false;
+			}
+
 			if (!noteInventory.isFull())
 			{
-				if (FlxG.keys.justPressed.ENTER)
+				if (FlxG.keys.justPressed.ENTER && !enterPressedInBoundingBox && !isDialogueActive && !dialogBox.isActive && dialogCooldown <= 0)
 				{
+					enterPressedInBoundingBox = true;
 					var blipNum = FlxG.random.int(1, 5);
 					FlxG.sound.play("assets/sounds/sfx.blip." + blipNum + ".wav", 0.7);
 					var dialogueText = Main.tongue.get("$COLLECT_ALL_NOTES", "dialog");
 					showDialogue("SYSTEM", dialogueText);
+					dialogCooldown = 0.5;
 				}
 				return;
 			}
 
 			touchingBoundingBox = true;
 
-			if (FlxG.keys.justPressed.ENTER)
+			if (FlxG.keys.justPressed.ENTER && !enterPressedInBoundingBox && !isDialogueActive && !dialogBox.isActive && dialogCooldown <= 0)
 			{
+				enterPressedInBoundingBox = true;
 				var blipNum = FlxG.random.int(1, 5);
 				FlxG.sound.play("assets/sounds/sfx.blip." + blipNum + ".wav", 0.7);
 
@@ -581,7 +622,12 @@ class GameState extends FlxState
 				{
 					FlxTween.tween(blackOverlay, {alpha: 1}, 1.0);
 				}
+				dialogCooldown = 0.5;
 			}
+		}
+		else
+		{
+			enterPressedInBoundingBox = false;
 		}
 	}
 
@@ -766,5 +812,94 @@ class GameState extends FlxState
 			case "-": FlxG.keys.pressed.MINUS;
 			case _: false;
 		};
+	}
+	private function createShipExplosionSprite():FlxSprite
+	{
+		try
+		{
+			var aseBytes = openfl.Assets.getBytes("assets/animsprites/CC_shipExplosion_001.ase");
+			var aseData = Ase.fromBytes(aseBytes);
+
+			trace("ASE file loaded: " + aseData.width + "x" + aseData.height + ", " + aseData.frames.length + " frames");
+
+			var sprite = new FlxSprite(0, 0);
+			var frameArray:Array<Int> = [];
+
+			var sheetWidth = aseData.width * aseData.frames.length;
+			var sheetHeight = aseData.height;
+			var sheet = new BitmapData(sheetWidth, sheetHeight, true, 0x00000000);
+
+			for (frameIndex in 0...aseData.frames.length)
+			{
+				var frame = aseData.frames[frameIndex];
+				var frameBitmap = new BitmapData(aseData.width, aseData.height, true, 0x00000000);
+
+				for (layerIndex in 0...aseData.layers.length)
+				{
+					var layer = aseData.layers[layerIndex];
+					if (!layer.visible)
+						continue;
+
+					var cel = frame.cel(layerIndex);
+					if (cel == null)
+						continue;
+
+					var celPixels = cel.pixelData;
+					var celX = cel.xPosition;
+					var celY = cel.yPosition;
+
+					for (y in 0...cel.height)
+					{
+						for (x in 0...cel.width)
+						{
+							var pixelIndex = (y * cel.width + x) * 4;
+							if (pixelIndex + 3 < celPixels.length)
+							{
+								var r = celPixels.get(pixelIndex);
+								var g = celPixels.get(pixelIndex + 1);
+								var b = celPixels.get(pixelIndex + 2);
+								var a = celPixels.get(pixelIndex + 3);
+
+								if (a > 0)
+								{
+									var color = (a << 24) | (r << 16) | (g << 8) | b;
+									var px = celX + x;
+									var py = celY + y;
+									if (px >= 0 && px < aseData.width && py >= 0 && py < aseData.height)
+									{
+										frameBitmap.setPixel32(px, py, color);
+									}
+								}
+							}
+						}
+					}
+				}
+
+				var destX = frameIndex * aseData.width;
+				sheet.copyPixels(frameBitmap, new openfl.geom.Rectangle(0, 0, aseData.width, aseData.height), new openfl.geom.Point(destX, 0));
+				frameArray.push(frameIndex);
+			}
+
+			var graphic = FlxGraphic.fromBitmapData(sheet, false, "shipExplosion_sheet");
+			sprite.loadGraphic(graphic, true, aseData.width, aseData.height);
+
+			sprite.scale.set(8, 8);
+			sprite.updateHitbox();
+
+			sprite.x = (FlxG.width - sprite.width) / 2;
+			sprite.y = (FlxG.height - sprite.height) / 2;
+			sprite.scrollFactor.set(0, 0);
+
+			sprite.animation.add("explode", frameArray, 12, false);
+			sprite.visible = false;
+
+			trace("Ship explosion sprite created successfully!");
+			return sprite;
+		}
+		catch (e:Dynamic)
+		{
+			trace("Error loading ship explosion: " + e);
+			return null;
+		}
 	}
 }

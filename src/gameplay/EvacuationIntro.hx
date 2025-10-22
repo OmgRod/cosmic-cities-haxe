@@ -368,8 +368,8 @@ class EvacuationIntro
 		if (seconds < 0)
 			seconds = 0;
 		
-		var minStr = (minutes < 10 ? "0" : "") + Std.string(minutes);
-		var secStr = (seconds < 10 ? "0" : "") + Std.string(seconds);
+		var minStr = (minutes < 5 ? "0" : "") + Std.string(minutes);
+		var secStr = (seconds < 5 ? "0" : "") + Std.string(seconds);
 		evacuationTimerDisplay.text = minStr + ":" + secStr;
 	}
 

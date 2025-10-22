@@ -12,7 +12,7 @@ class ModContent
 		
 		if (modId != null)
 		{
-			content = modManager.getModFileContent(modId, "assets/data/" + filePath);
+			content = modManager.getModFileContent(modId, filePath);
 		}
 		else
 		{
@@ -21,28 +21,10 @@ class ModContent
 			while (i >= 0)
 			{
 				var currentModId = enabledMods[i];
-				content = modManager.getModFileContent(currentModId, "assets/data/" + filePath);
+				content = modManager.getModFileContent(currentModId, filePath);
 				if (content != null)
 					break;
 				i--;
-			}
-			
-			if (content == null)
-			{
-				#if sys
-				var basePath = "assets/data/" + filePath;
-				if (sys.FileSystem.exists(basePath))
-					content = sys.io.File.getContent(basePath);
-				#elseif js
-				try
-				{
-					content = openfl.utils.Assets.getText("assets/data/" + filePath);
-				}
-				catch (e:Dynamic)
-				{
-					return null;
-				}
-				#end
 			}
 		}
 		

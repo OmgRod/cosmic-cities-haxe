@@ -1,0 +1,9 @@
+package utils;
+
+class NGConfig {
+    public static inline var APP_ID_AND_KEY:String = "YOUR_APP_ID:YOUR_ENCRYPTION_KEY";
+    public static inline var ENC_KEY_FOR_SETUP:String = "YOUR_ENCRYPTION_KEY_BASE64";
+
+    public static inline var APP_ID_AND_KEY_B64:String = "WU9VUl9BUFBfSUQ6WU9VUl9FTkNSWVBUSU9OX0tFWQ=="; // Base64(APP_ID:ENCRYPTION_KEY)
+    public static inline var ENC_KEY_B64:String = "WU9VUl9FTkNSWVBUSU9OX0tFWV9CQVNFMjQ="; // Base64(ENCRYPTION_KEY_BASE64)
+}

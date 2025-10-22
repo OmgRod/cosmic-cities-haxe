@@ -8,6 +8,9 @@ import flixel.ui.FlxButton;
 import ui.backgrounds.Starfield;
 import ui.style.ButtonStyle;
 import utils.BMFont;
+#if js
+import utils.NGHelper;
+#end
 
 class CreditsState extends FlxState
 {
@@ -20,6 +23,7 @@ class CreditsState extends FlxState
 	var fontString:String;
 	var font:Dynamic;
 	var fadeStarted:Bool = false;
+	var medalAwarded:Bool = false;
 
 	override public function create()
 	{
@@ -117,6 +121,33 @@ class CreditsState extends FlxState
 		addCenteredText("haxeflixel.com", 0.8, 0xFFAAAAAA);
 		addSpacer(sectionSpacing);
 
+		#if desktop
+		var modCredits = managers.ModManager.getInstance().getModCredits();
+		if (modCredits.length > 0)
+		{
+			addSectionTitle(Main.tongue.get("$MODS_TITLE", "ui"));
+			for (entry in modCredits)
+			{
+				var c = entry.item;
+				if (c.section != null && c.section != "")
+				{
+					addSectionTitle(resolveText(c.section));
+				}
+				if (c.text != null && c.text != "")
+				{
+					addCenteredText(resolveText(c.text), 0.8, 0xFFFFFFFF);
+				}
+				else if (c.role != null || c.name != null)
+				{
+					var role = c.role != null ? resolveText(c.role) : "";
+					var name = c.name != null ? resolveText(c.name) : "";
+					addCreditItem(role, name);
+				}
+			}
+			addSpacer(sectionSpacing);
+		}
+		#end
+
 		addSpacer(sectionSpacing);
 		addCenteredText(Main.tongue.get("$CREDITS_THANK_YOU", "ui"), 1.0, 0xFFFFFF00);
 		addSpacer(sectionSpacing);
@@ -160,10 +191,27 @@ class CreditsState extends FlxState
 		}
 
 		if (offsetY + totalHeight < 0)
+		{
+			awardCreditsMedal();
 			startFadeToMenu();
+		}
 		#if !android
 		if (FlxG.keys.justPressed.ESCAPE)
 			startFadeToMenu();
+		#end
+	}
+
+	function awardCreditsMedal():Void
+	{
+		if (medalAwarded)
+			return;
+		medalAwarded = true;
+
+		#if js
+		trace("[NG] Credits complete, requesting medal unlock 86790");
+		NGHelper.unlockMedal(86790);
+		#else
+		trace("[NG] Skipping medal unlock (non-JS build)");
 		#end
 	}
 
@@ -202,5 +250,11 @@ class CreditsState extends FlxState
 		t.updateHitbox();
 		t.color = color;
 		return t;
+	}
+	inline function resolveText(s:String):String
+	{
+		if (s != null && s.length > 0 && s.charAt(0) == '$')
+			return Main.tongue.get(s, "ui");
+		return s;
 	}
 }

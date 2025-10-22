@@ -20,6 +20,10 @@ import hxdiscord_rpc.Discord;
 import hxdiscord_rpc.Types;
 #end
 
+#if steam
+import steamwrap.api.Steam;
+#end
+
 class LoadingState extends FlxState
 {
     var progressBar:FlxBar;
@@ -76,6 +80,21 @@ class LoadingState extends FlxState
 				#end
 
 			case 1:
+				#if steam
+				updateStatus(Main.tongue.get("$LOADING_INIT_STEAM", "ui"));
+				if (Steam.init != null && Steam.init(480))
+				{
+					trace("Steam initialized!");
+				}
+				else
+				{
+					trace("Steam failed to init!");
+				}
+				#end
+				loadingStep++;
+				runNextStep();
+
+			case 2:
 				updateStatus(Main.tongue.get("$LOADING_LD_ASSETS", "ui"));
 				MusicManager.load("intro", "assets/sounds/music.intro.wav", true);
 				MusicManager.load("intro.old", "assets/sounds/music.intro.old.wav", true);
@@ -86,7 +105,7 @@ class LoadingState extends FlxState
 				loadingStep++;
                 runNextStep();
 
-			case 2: 
+			case 3: 
 				updateStatus(Main.tongue.get("$LOADING_DONE", "ui"));
                 progressBar.value = 4;
 				FlxG.switchState(() -> new MainMenuState());
