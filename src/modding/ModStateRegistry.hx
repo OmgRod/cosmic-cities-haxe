@@ -39,7 +39,7 @@ class ModStateRegistry
 		var stateClass = customStates.get(id);
 		if (stateClass != null)
 		{
-			flixel.FlxG.switchState(Type.createInstance(stateClass, []));
+			flixel.FlxG.switchState(() -> Type.createInstance(stateClass, []));
 			return true;
 		}
 		trace("Error: Custom state not found: " + id);

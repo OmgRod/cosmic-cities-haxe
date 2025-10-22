@@ -1,6 +1,7 @@
 package managers;
 
 import flixel.sound.FlxSound;
+import flixel.tweens.FlxTween;
 import haxe.ds.StringMap;
 
 class MusicManager
@@ -59,6 +60,22 @@ class MusicManager
 			sound.play();
         }
     }
+
+	public static function fadeOutAndStop(id:String, duration:Float):Void
+	{
+		var sound = sources.get(id);
+		if (sound == null)
+			return;
+
+		FlxTween.tween(sound, {volume: 0.0}, duration, (({
+			onComplete: function():Void
+			{
+				sound.stop();
+				if (currentId == id)
+					currentId = null;
+			}
+		}) : Dynamic));
+	}
 
 	public static function pauseAll():Void
 	{

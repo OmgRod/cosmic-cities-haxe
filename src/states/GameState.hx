@@ -359,10 +359,10 @@ class GameState extends FlxState
 				shipExplosionSprite.visible = true;
 				shipExplosionSprite.animation.play("explode");
 
-				shipExplosionSprite.animation.finishCallback = function(name:String)
+				shipExplosionSprite.animation.onFinish.add(function(name:String)
 				{
 					trace("Ship explosion animation finished!");
-				};
+				});
 			}
 		});
 	}
@@ -620,7 +620,13 @@ class GameState extends FlxState
 
 				if (blackOverlay != null)
 				{
-					FlxTween.tween(blackOverlay, {alpha: 1}, 1.0);
+					var fadeDuration:Float = 1.0;
+					FlxTween.tween(blackOverlay, {alpha: 1}, fadeDuration);
+					var currentMusic = MusicManager.getCurrent();
+					if (currentMusic != null)
+					{
+						MusicManager.fadeOutAndStop(currentMusic, fadeDuration);
+					}
 				}
 				dialogCooldown = 0.5;
 			}
@@ -890,7 +896,7 @@ class GameState extends FlxState
 			sprite.y = (FlxG.height - sprite.height) / 2;
 			sprite.scrollFactor.set(0, 0);
 
-			sprite.animation.add("explode", frameArray, 12, false);
+			sprite.animation.add("explode", frameArray, 8, false);
 			sprite.visible = false;
 
 			trace("Ship explosion sprite created successfully!");

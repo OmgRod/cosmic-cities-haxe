@@ -183,7 +183,7 @@ class EvacuationIntro
 		isComplete = false;
 		isDialogueActive = true;
 		timer = 0.0;
-		evacuationTimer = 300.0;
+		evacuationTimer = 10.0;
 		alarmFlashTimer = 0.0;
 		dialogueShown = false;
 		currentDialogue = 0;
@@ -218,7 +218,7 @@ class EvacuationIntro
 		isComplete = false;
 		isDialogueActive = false;
 		timer = 0.0;
-		evacuationTimer = 300.0;
+		evacuationTimer = 10.0;
 		alarmFlashTimer = 0.0;
 		dialogueShown = false;
 		currentDialogue = 0;
@@ -368,8 +368,8 @@ class EvacuationIntro
 		if (seconds < 0)
 			seconds = 0;
 		
-		var minStr = (minutes < 5 ? "0" : "") + Std.string(minutes);
-		var secStr = (seconds < 5 ? "0" : "") + Std.string(seconds);
+		var minStr = (minutes < 10 ? "0" : "") + Std.string(minutes);
+		var secStr = (seconds < 10 ? "0" : "") + Std.string(seconds);
 		evacuationTimerDisplay.text = minStr + ":" + secStr;
 	}
 
