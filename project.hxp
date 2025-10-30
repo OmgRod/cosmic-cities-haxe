@@ -1,0 +1,158 @@
+package;
+
+import hxp.*;
+import lime.tools.*;
+import sys.FileSystem;
+import sys.io.File;
+import haxe.io.Bytes;
+import haxe.io.Path;
+import haxe.ds.Map;
+import haxe.xml.Printer;
+
+using StringTools;
+
+@:nullSafety
+class Project extends HXProject
+{
+  static final VERSION:String = "0.1.0";
+  static final BUILD_NUMBER:Int = 1;
+  static final TITLE:String = "Cosmic Cities";
+  static final PACKAGE_NAME:String = "me.omgrod.cosmiccities";
+  static final EXECUTABLE_NAME:String = "CosmicCities";
+  static final SOURCE_DIR:String = "src";
+  static final TEMPLATES_DIR:String = "templates";
+  static final PRELOADER:String = "states.LoadingState";
+  static final MAIN_CLASS:String = "Main";
+  static final COMPANY:String = "OmgRod";
+  static final LANGUAGES:Array<String> = ["en"];
+
+  static var envConfig:Null<Map<String, Dynamic>> = null;
+
+  static final ANDROID_MINIMUM_SDK_VERSION:Int = 28;
+  static final ANDROID_TARGET_SDK_VERSION:Int = 35;
+  static final ANDROID_EXTENSIONS:Array<String> = [];
+  static var IOS_TEAM_ID:String = "";
+  static var astcExcludes:Array<String> = [];
+
+  static final PREBUILD_HX:String = "src/Prebuild.hx";
+  static final POSTBUILD_HX:String = "src/Postbuild.hx";
+
+  static final EXCLUDE_ASSETS:Array<String> = [".*", "cvs", "thumbs.db", "desktop.ini", "*.hash", "*.md"];
+  static final EXCLUDE_ASSETS_WEB:Array<String> = ["*.ogg"];
+  static final EXCLUDE_ASSETS_NATIVE:Array<String> = ["*.mp3"];
+  static final EXCLUDE_ASSETS_CENSORED:Array<String> = [];
+  static final EXCLUDE_ASSETS_UNCENSORED:Array<String> = [];
+
+  // Feature flags (a subset tailored for this project)
+  static final FEATURE_DEBUG_FUNCTIONS:FeatureFlag = "FEATURE_DEBUG_FUNCTIONS";
+  static final FEATURE_DISCORD_RPC:FeatureFlag = "FEATURE_DISCORD_RPC";
+  static final FEATURE_POLYMOD_MODS:FeatureFlag = "FEATURE_POLYMOD_MODS";
+  static final FEATURE_VIDEO_PLAYBACK:FeatureFlag = "FEATURE_VIDEO_PLAYBACK";
+  static final FEATURE_TOUCH_CONTROLS:FeatureFlag = "FEATURE_TOUCH_CONTROLS";
+  static final FEATURE_CHART_EDITOR:FeatureFlag = "FEATURE_CHART_EDITOR";
+
+  public function new()
+  {
+    super();
+    envConfig = readEnvironmentFile("./.env");
+
+    configureApp();
+    configureFeatureFlags();
+    configureCompileDefines();
+    configureIncludeMacros();
+    configureCustomMacros();
+    configureOutputDir();
+    configurePolymod();
+    configureHaxelibs();
+    configureAssets();
+  }
+
+  function configureApp()
+  {
+    this.meta.title = TITLE;
+    this.meta.version = VERSION;
+    this.meta.packageName = PACKAGE_NAME;
+    this.meta.company = COMPANY;
+
+    this.app.main = MAIN_CLASS;
+    this.app.file = EXECUTABLE_NAME;
+    this.app.preloader = PRELOADER;
+
+    this.sources.push(SOURCE_DIR);
+    this.templatePaths.push(TEMPLATES_DIR);
+
+    this.preBuildCallbacks.push(buildHaxeCLICommand(PREBUILD_HX));
+    this.postBuildCallbacks.push(buildHaxeCLICommand(POSTBUILD_HX));
+
+    this.languages = LANGUAGES;
+    this.meta.buildNumber = Std.string(BUILD_NUMBER);
+
+    this.window.fps = 60;
+    this.window.width = 1280;
+    this.window.height = 720;
+    this.window.background = FEATURE_DEBUG_FUNCTIONS.isEnabled(this) ? 0xFFFF00FF : 0xFF000000;
+
+    this.sources.push(SOURCE_DIR);
+  }
+
+  function configureFeatureFlags()
+  {
+    FEATURE_DEBUG_FUNCTIONS.apply(this, isDebug());
+    FEATURE_POLYMOD_MODS.apply(this, true);
+    FEATURE_VIDEO_PLAYBACK.apply(this, !isWeb());
+    FEATURE_DISCORD_RPC.apply(this, isDesktop() && !FEATURE_DEBUG_FUNCTIONS.isEnabled(this));
+  }
+
+  function configureCompileDefines()
+  {
+    setHaxedef("openfl-enable-handle-error");
+    setHaxedef("lime_disable_assets_version");
+    setHaxedef("HXCPP_CHECK_POINTER");
+    setHaxedef("HXCPP_STACK_LINE");
+    setHaxedef("HXCPP_STACK_TRACE");
+  }
+
+  function configureIncludeMacros()
+  {
+    addHaxeFlag("-dce no");
+    addHaxeMacro("include('flixel', true, ['flixel.addons.nape.*'])");
+  }
+
+  function configureCustomMacros()
+  {
+    // placeholder for project-specific macros
+  }
+
+  function configureOutputDir()
+  {
+    var buildDir = 'export/${isDebug() ? 'debug' : 'release'}';
+    info('Output directory: $buildDir');
+    buildDir += "/";
+    app.path = buildDir;
+  }
+
+  function configurePolymod()
+  {
+    setHaxedef("POLYMOD_SCRIPT_EXT", ".hscript");
+    setHaxedef("POLYMOD_SCRIPT_LIBRARY", "scripts");
+    setHaxedef("POLYMOD_ROOT_PATH", "scripts/");
+  }
+
+  function configureHaxelibs()
+  {
+    addHaxelib('flixel');
+    addHaxelib('flixel-addons');
+    addHaxelib('haxeui-core');
+    addHaxelib('haxeui-flixel');
+    addHaxelib('polymod');
+    addHaxelib('firetongue');
+    addHaxelib('json2object');
+    addHaxelib('thx.core');
+  }
+
+  function configureAssets()
+  {
+    for (ex in EXCLUDE_ASSETS) config.push('assets.exclude', ex);
+    for (ex in EXCLUDE_ASSETS_WEB) config.push('assets.exclude.web', ex);
+  }
+}
