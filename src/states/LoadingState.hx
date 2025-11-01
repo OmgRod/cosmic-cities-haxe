@@ -132,16 +132,16 @@ class LoadingState extends FlxState
         } catch (e:Dynamic) {
             Sys.println('Discord RPC initialization failed: $e');
         }
-
-        override public function destroy():Void
-        {
-            ModHooks.run(ModHookEvents.LOADING_DESTROY_PRE, new ModHookContext(this));
-            super.destroy();
-            ModHooks.run(ModHookEvents.LOADING_DESTROY_POST, new ModHookContext(this));
-        }
 		#end
 
-        done();
+		done();
+	}
+
+	override public function destroy():Void
+	{
+		ModHooks.run(ModHookEvents.LOADING_DESTROY_PRE, new ModHookContext(this));
+		super.destroy();
+		ModHooks.run(ModHookEvents.LOADING_DESTROY_POST, new ModHookContext(this));
     }
 
 	#if (!disable_discord && cpp && !android)

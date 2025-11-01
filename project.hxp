@@ -4,155 +4,103 @@ import hxp.*;
 import lime.tools.*;
 import sys.FileSystem;
 import sys.io.File;
-import haxe.io.Bytes;
 import haxe.io.Path;
-import haxe.ds.Map;
-import haxe.xml.Printer;
-
-using StringTools;
 
 @:nullSafety
 class Project extends HXProject
 {
-  static final VERSION:String = "0.1.0";
-  static final BUILD_NUMBER:Int = 1;
   static final TITLE:String = "Cosmic Cities";
-  static final PACKAGE_NAME:String = "me.omgrod.cosmiccities";
-  static final EXECUTABLE_NAME:String = "CosmicCities";
-  static final SOURCE_DIR:String = "src";
-  static final TEMPLATES_DIR:String = "templates";
-  static final PRELOADER:String = "states.LoadingState";
-  static final MAIN_CLASS:String = "Main";
   static final COMPANY:String = "OmgRod";
-  static final LANGUAGES:Array<String> = ["en"];
+  static final VERSION:String = "1.0.0";
+  static final EXECUTABLE_NAME:String = "CosmicCities";
+  static final MAIN_CLASS:String = "Main";
+  static final PRELOADER:String = "flixel.system.FlxPreloader";
 
-  static var envConfig:Null<Map<String, Dynamic>> = null;
-
-  static final ANDROID_MINIMUM_SDK_VERSION:Int = 28;
-  static final ANDROID_TARGET_SDK_VERSION:Int = 35;
-  static final ANDROID_EXTENSIONS:Array<String> = [];
-  static var IOS_TEAM_ID:String = "";
-  static var astcExcludes:Array<String> = [];
-
-  static final PREBUILD_HX:String = "src/Prebuild.hx";
-  static final POSTBUILD_HX:String = "src/Postbuild.hx";
-
-  static final EXCLUDE_ASSETS:Array<String> = [".*", "cvs", "thumbs.db", "desktop.ini", "*.hash", "*.md"];
-  static final EXCLUDE_ASSETS_WEB:Array<String> = ["*.ogg"];
-  static final EXCLUDE_ASSETS_NATIVE:Array<String> = ["*.mp3"];
-  static final EXCLUDE_ASSETS_CENSORED:Array<String> = [];
-  static final EXCLUDE_ASSETS_UNCENSORED:Array<String> = [];
-
-  // Feature flags (a subset tailored for this project)
-  static final FEATURE_DEBUG_FUNCTIONS:FeatureFlag = "FEATURE_DEBUG_FUNCTIONS";
-  static final FEATURE_DISCORD_RPC:FeatureFlag = "FEATURE_DISCORD_RPC";
-  static final FEATURE_POLYMOD_MODS:FeatureFlag = "FEATURE_POLYMOD_MODS";
-  static final FEATURE_VIDEO_PLAYBACK:FeatureFlag = "FEATURE_VIDEO_PLAYBACK";
-  static final FEATURE_TOUCH_CONTROLS:FeatureFlag = "FEATURE_TOUCH_CONTROLS";
-  static final FEATURE_CHART_EDITOR:FeatureFlag = "FEATURE_CHART_EDITOR";
+  static final SOURCE_DIR:String = "src";
+  static final MODS_PATH:String = "mods/example-mod/classes";
+  static final ASSETS:Array<String> = ["assets", "mods"];
 
   public function new()
   {
     super();
-    envConfig = readEnvironmentFile("./.env");
-
-    configureApp();
-    configureFeatureFlags();
-    configureCompileDefines();
-    configureIncludeMacros();
-    configureCustomMacros();
-    configureOutputDir();
-    configurePolymod();
-    configureHaxelibs();
-    configureAssets();
+    setupApp();
+    setupWindow();
+    setupDefines();
+    setupHaxelibs();
+    setupSources();
+    setupAssets();
   }
 
-  function configureApp()
+  function setupApp()
   {
-    this.meta.title = TITLE;
-    this.meta.version = VERSION;
-    this.meta.packageName = PACKAGE_NAME;
-    this.meta.company = COMPANY;
+    meta.title = TITLE;
+    meta.company = COMPANY;
+    meta.version = VERSION;
 
-    this.app.main = MAIN_CLASS;
-    this.app.file = EXECUTABLE_NAME;
-    this.app.preloader = PRELOADER;
+    app.main = MAIN_CLASS;
+    app.file = EXECUTABLE_NAME;
+    app.preloader = PRELOADER;
 
-    this.sources.push(SOURCE_DIR);
-    this.templatePaths.push(TEMPLATES_DIR);
-
-    this.preBuildCallbacks.push(buildHaxeCLICommand(PREBUILD_HX));
-    this.postBuildCallbacks.push(buildHaxeCLICommand(POSTBUILD_HX));
-
-    this.languages = LANGUAGES;
-    this.meta.buildNumber = Std.string(BUILD_NUMBER);
-
-    this.window.fps = 60;
-    this.window.width = 1280;
-    this.window.height = 720;
-    this.window.background = FEATURE_DEBUG_FUNCTIONS.isEnabled(this) ? 0xFFFF00FF : 0xFF000000;
-
-    this.sources.push(SOURCE_DIR);
+    var buildType = debug ? "debug" : "release";
+    app.path = "export/" + buildType + "/";
   }
 
-  function configureFeatureFlags()
+  function setupWindow()
   {
-    FEATURE_DEBUG_FUNCTIONS.apply(this, isDebug());
-    FEATURE_POLYMOD_MODS.apply(this, true);
-    FEATURE_VIDEO_PLAYBACK.apply(this, !isWeb());
-    FEATURE_DISCORD_RPC.apply(this, isDesktop() && !FEATURE_DEBUG_FUNCTIONS.isEnabled(this));
+    window.width = 640;
+    window.height = 480;
+    window.fps = 60;
+    window.background = 0xFF000000;
+    window.fullscreen = false;
+    window.resizable = true;
+
+    // Fixed orientation enum case
+    window.orientation = Orientation.LANDSCAPE;
   }
 
-  function configureCompileDefines()
+  function setupDefines()
   {
-    setHaxedef("openfl-enable-handle-error");
-    setHaxedef("lime_disable_assets_version");
-    setHaxedef("HXCPP_CHECK_POINTER");
-    setHaxedef("HXCPP_STACK_LINE");
-    setHaxedef("HXCPP_STACK_TRACE");
+    defines.set("FLX_NO_HEALTH", "");
+    defines.set("FLX_NO_FOCUS_LOST_SCREEN", "");
+    defines.set("NAPE_RELEASE_BUILD", "");
+    defines.set("FLX_NO_GAMEPAD", "");
+    defines.set("FLX_NO_NATIVE_CURSOR", "");
+    if (!debug)
+      defines.set("FLX_NO_DEBUG", "");
   }
 
-  function configureIncludeMacros()
+  function setupHaxelibs()
   {
-    addHaxeFlag("-dce no");
-    addHaxeMacro("include('flixel', true, ['flixel.addons.nape.*'])");
+    haxelibs.push(new Haxelib("flixel"));
+    haxelibs.push(new Haxelib("flixel-addons"));
+    haxelibs.push(new Haxelib("flixel-ui"));
+    haxelibs.push(new Haxelib("firetongue"));
+    haxelibs.push(new Haxelib("nape-haxe4"));
+    haxelibs.push(new Haxelib("hxdiscord_rpc"));
+    haxelibs.push(new Haxelib("ase"));
+    haxelibs.push(new Haxelib("actuate"));
+    haxelibs.push(new Haxelib("polymod"));
+    haxelibs.push(new Haxelib("hscript"));
+    haxelibs.push(new Haxelib("newgrounds"));
+    haxelibs.push(new Haxelib("hxcpp"));
+    haxelibs.push(new Haxelib("cxx2hx"));
   }
 
-  function configureCustomMacros()
+  function setupSources()
   {
-    // placeholder for project-specific macros
+    sources.push(SOURCE_DIR);
+
+    // Only include mod classes if the folder exists
+    if (FileSystem.exists(MODS_PATH))
+      sources.push(MODS_PATH);
   }
 
-  function configureOutputDir()
+  function setupAssets()
   {
-    var buildDir = 'export/${isDebug() ? 'debug' : 'release'}';
-    info('Output directory: $buildDir');
-    buildDir += "/";
-    app.path = buildDir;
-  }
-
-  function configurePolymod()
-  {
-    setHaxedef("POLYMOD_SCRIPT_EXT", ".hscript");
-    setHaxedef("POLYMOD_SCRIPT_LIBRARY", "scripts");
-    setHaxedef("POLYMOD_ROOT_PATH", "scripts/");
-  }
-
-  function configureHaxelibs()
-  {
-    addHaxelib('flixel');
-    addHaxelib('flixel-addons');
-    addHaxelib('haxeui-core');
-    addHaxelib('haxeui-flixel');
-    addHaxelib('polymod');
-    addHaxelib('firetongue');
-    addHaxelib('json2object');
-    addHaxelib('thx.core');
-  }
-
-  function configureAssets()
-  {
-    for (ex in EXCLUDE_ASSETS) config.push('assets.exclude', ex);
-    for (ex in EXCLUDE_ASSETS_WEB) config.push('assets.exclude.web', ex);
+    // assets stuff tbd
+    
+    config.set("assets.exclude.patterns", ".*|cvs|thumbs.db|desktop.ini|*.hash|*.md");
+    config.set("assets.exclude.web", "*.ogg");
+    config.set("assets.exclude.native", "*.mp3");
   }
 }
