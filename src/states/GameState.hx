@@ -56,6 +56,10 @@ class GameState extends FlxState
 	var roomSwapDataArr:Array<Dynamic> = [];
 	var mapOffsetX:Float = 0;
 	var mapOffsetY:Float = 0;
+	var spawnX:Float = 0.0;
+	var spawnY:Float = 0.0;
+	var spawnFound:Bool = false;
+	var playerFrozen:Bool = false;
 	var cameraTarget:FlxSprite;
 	var cameraYOffset:Float = 8;
 
@@ -170,10 +174,30 @@ class GameState extends FlxState
 
 	private function loadMap(tmxPath:String, tilesetPath:String, playerX:Null<Float>, playerY:Null<Float>):Void
 	{
+		// Reset spawnFound for this map load — each map should indicate whether
+		// it contains an explicit player-spawn object.
+		spawnFound = false;
+		// Destroy previous map group and children to avoid leftover sprites affecting the new map
 		if (mapGroup != null)
-			remove(mapGroup);
+		{
+			try
+			{
+				remove(mapGroup);
+				mapGroup.destroy();
+			}
+			catch (e:Dynamic) {}
+			mapGroup = null;
+		}
 		if (wallsGroup != null)
-			remove(wallsGroup);
+		{
+			try
+			{
+				remove(wallsGroup);
+				wallsGroup.destroy();
+			}
+			catch (e:Dynamic) {}
+			wallsGroup = null;
+		}
 		if (walls != null)
 		{
 			walls = [];
@@ -181,7 +205,15 @@ class GameState extends FlxState
 		hitboxes = [];
 		
 		if (roomSwapGroup != null)
-			remove(roomSwapGroup);
+		{
+			try
+			{
+				remove(roomSwapGroup);
+				roomSwapGroup.destroy();
+			}
+			catch (e:Dynamic) {}
+			roomSwapGroup = null;
+		}
 
 		var result = TmxSimple.load(tmxPath, tilesetPath);
 
@@ -252,6 +284,15 @@ class GameState extends FlxState
 		add(roomSwapGroup);
 
 		gameplayManager.setMapObjectGroups(result.objectGroups);
+		// Debug: list object groups parsed from TMX
+		try
+		{
+			var keys = [];
+			for (k in result.objectGroups.keys())
+				keys.push(k);
+			trace("[TMX DEBUG] objectGroups keys: " + Std.string(keys));
+		}
+		catch (e:Dynamic) {}
 
 		var spawnPxX = 0.0;
 		var spawnPxY = 0.0;
@@ -259,16 +300,32 @@ class GameState extends FlxState
 		if (result.objectGroups.exists("Metadata"))
 		{
 			var metadataObjects = result.objectGroups.get("Metadata");
+			// Debug: show metadataObjects contents
+			try
+			{
+				for (m in metadataObjects)
+				{
+					trace("[TMX DEBUG] Metadata object: name=" + Std.string(m.name) + " x=" + Std.string(m.x) + " y=" + Std.string(m.y));
+				}
+			}
+			catch (e:Dynamic) {}
 			for (obj in metadataObjects)
 			{
 				if (obj.name == "player-spawn")
 				{
 					spawnPxX = obj.x;
 					spawnPxY = obj.y;
+					// store into the class-level flag so other methods/closures
+					// can observe whether a spawn point existed in the map.
+					spawnFound = true;
 					trace("Found player spawn point at (" + spawnPxX + ", " + spawnPxY + ")");
 					break;
 				}
 			}
+		}
+		else
+		{
+			trace("[TMX DEBUG] Metadata group not found in TMX objectGroups");
 		}
 		loadBoundingBox(result.objectGroups);
 
@@ -308,8 +365,55 @@ class GameState extends FlxState
 			}
 		}
 
-		player = new Player(spawnPxX, spawnPxY);
+		spawnX = spawnPxX;
+		spawnY = spawnPxY;
+		// If no spawn was found in the TMX, try a roomSwap fallback or center on map
+		if (!spawnFound)
+		{
+			// Prefer a roomSwap that targets 'ship-main' or similar, otherwise pick center
+			var foundFallback:Bool = false;
+			for (rs in roomSwapDataArr)
+			{
+				if (rs == null)
+					continue;
+				// Only use roomSwap target if it lies within this map's pixel bounds.
+				if (rs.targetX != null && rs.targetY != null)
+				{
+					var tx = rs.targetX;
+					var ty = rs.targetY;
+					if (tx >= 0 && tx <= mapWidth && ty >= 0 && ty <= mapHeight)
+					{
+						spawnX = tx;
+						spawnY = ty;
+						foundFallback = true;
+						trace("[SPAWN DEBUG] Using roomSwap fallback spawn -> ("
+							+ spawnX
+							+ ", "
+							+ spawnY
+							+ ") roomFilename="
+							+ Std.string(rs.roomFilename));
+						break;
+					}
+					else
+					{
+						trace("[SPAWN DEBUG] Ignoring roomSwap target (" + Std.string(tx) + ", " + Std.string(ty) + ") outside map bounds ("
+							+ Std.string(mapWidth) + "," + Std.string(mapHeight) + ")");
+					}
+				}
+			}
+			if (!foundFallback)
+			{
+				// Default to map center (pixel coords)
+				spawnX = Std.int(mapWidth / 2);
+				spawnY = Std.int(mapHeight / 2);
+				trace("[SPAWN DEBUG] No spawn or roomSwap fallback found; centering player at (" + spawnX + ", " + spawnY + ")");
+			}
+		}
+
+		player = new Player(spawnX, spawnY);
 		add(player);
+		trace("[SPAWN DEBUG] Player created at player.x=" + Std.string(player.x) + " player.y=" + Std.string(player.y) + " spawnFound="
+			+ Std.string(spawnFound));
 		if (playerX != null && playerY != null)
 		{
 			player.x = playerX;
@@ -322,12 +426,28 @@ class GameState extends FlxState
 			cameraTarget.destroy();
 		}
 		
-		cameraTarget = new FlxSprite(player.x, player.y);
+		// Ensure camera target is centered on player's body to avoid 0,0 snap
+		cameraTarget = new FlxSprite(player.x + player.width / 2, player.y + player.height / 2 - cameraYOffset);
 		cameraTarget.makeGraphic(1, 1, 0x00000000);
 		cameraTarget.visible = false;
 		add(cameraTarget);
 		FlxG.camera.follow(cameraTarget);
 		FlxG.camera.setScrollBoundsRect(0, 0, mapWidth, mapHeight);
+		try
+		{
+			trace("[CAMERA DEBUG] cameraTarget initial=(" + Std.string(cameraTarget.x) + ", " + Std.string(cameraTarget.y) + ") mapW="
+				+ Std.string(mapWidth) + " mapH=" + Std.string(mapHeight));
+		}
+		catch (e:Dynamic) {}
+		// Emit a one-time warning if player or camera are at origin which previously caused 'stuck' symptoms
+		try
+		{
+			if ((player != null && player.x == 0 && player.y == 0) || (cameraTarget != null && cameraTarget.x == 0 && cameraTarget.y == 0))
+			{
+				trace('[SPAWN WARNING] player or camera at (0,0) after load - spawnFound=' + Std.string(spawnFound));
+			}
+		}
+		catch (e:Dynamic) {}
 	}
 
 	function setupEventListeners():Void
@@ -354,14 +474,293 @@ class GameState extends FlxState
 				orangeOverlay.visible = false;
 			}
 
+			// Hide any red alarm overlay that may be frozen (added by EvacuationIntro)
+			try
+			{
+				for (m in this.members)
+				{
+					if (Std.isOfType(m, Overlay))
+					{
+						var ov:Overlay = cast m;
+						// 0xFFFF0000 is the red overlay used by the evacuation alarm
+						if (ov != null && ov.color == 0xFFFF0000)
+						{
+							ov.visible = false;
+							ov.alpha = 0;
+						}
+					}
+				}
+			}
+			catch (e:Dynamic)
+			{
+				trace('[UI] Error hiding red overlays: ' + Std.string(e));
+			}
+
+			// Stop any ongoing SFX (like the alarm) so they don't overlap the explosion
+			try
+			{
+				for (snd in FlxG.sound.list.members)
+				{
+					if (snd != null && snd != FlxG.sound.music)
+					{
+						try
+						{
+							snd.stop();
+						}
+						catch (e:Dynamic) {}
+					}
+				}
+			}
+			catch (e:Dynamic)
+			{
+				trace('[SFX] Error while stopping sounds: ' + Std.string(e));
+			}
+
 			if (shipExplosionSprite != null)
 			{
 				shipExplosionSprite.visible = true;
+				// Prevent the player from moving while the explosion and subsequent
+				// dialogue sequence runs. Freeze immediately and zero velocity so
+				// the player cannot move or slide during the explosion.
+				if (player != null)
+				{
+					player.moves = false;
+					player.velocity.set(0, 0);
+					playerFrozen = true;
+				}
 				shipExplosionSprite.animation.play("explode");
+
+				trace('[SFX] Global volume=' + Std.string(FlxG.sound.volume) + ' defaultGroup=' + Std.string(FlxG.sound.defaultSoundGroup.volume)
+					+ ' muted=' + Std.string(FlxG.sound.muted));
+				var prevMaster = FlxG.sound.volume;
+				var prevGroup = FlxG.sound.defaultSoundGroup.volume;
+				var wasMuted = FlxG.sound.muted;
+				if (wasMuted)
+					FlxG.sound.muted = false;
+				if (FlxG.sound.volume < 0.6)
+					FlxG.sound.volume = 0.8;
+				if (FlxG.sound.defaultSoundGroup.volume < 0.6)
+					FlxG.sound.defaultSoundGroup.volume = 0.8;
+				try
+				{
+					var s = FlxG.sound.play("assets/sounds/sfx.explosion.2.wav", 1.0);
+					if (s != null)
+					{
+						trace('[SFX] FlxG.sound.play returned sound object, vol=' + Std.string(s.volume));
+					}
+					else
+					{
+						trace('[SFX] FlxG.sound.play returned null, attempting fallback load');
+						var explosionSound:flixel.sound.FlxSound = new flixel.sound.FlxSound();
+						explosionSound.loadStream("assets/sounds/sfx.explosion.2.wav", false);
+						explosionSound.volume = 1.0;
+						explosionSound.autoDestroy = true;
+						FlxG.sound.list.add(explosionSound);
+						explosionSound.play(false);
+						trace('[SFX] fallback explosionSound.play called, vol=' + Std.string(explosionSound.volume));
+					}
+				}
+				catch (e:Dynamic)
+				{
+					trace('[SFX] Exception while attempting to play explosion SFX: ' + Std.string(e));
+				}
+
+				haxe.Timer.delay(function()
+				{
+					FlxG.sound.volume = prevMaster;
+					FlxG.sound.defaultSoundGroup.volume = prevGroup;
+					FlxG.sound.muted = wasMuted;
+					trace('[SFX] Restored global sound volume and mute state');
+				}, 1000);
+
+				var cur = MusicManager.getCurrent();
+				if (cur != null)
+				{
+					trace('[MUSIC] Fading music to silence over 3s (target=0.0)');
+					MusicManager.fadeToVolume(cur, 0.0, 3.0);
+				}
 
 				shipExplosionSprite.animation.onFinish.add(function(name:String)
 				{
 					trace("Ship explosion animation finished!");
+					// ensure the black overlay is on top so the fade is visible
+					try
+					{
+						if (blackOverlay != null)
+						{
+							remove(blackOverlay);
+							add(blackOverlay);
+							blackOverlay.alpha = 0.0;
+							blackOverlay.visible = true;
+						}
+					}
+					catch (e:Dynamic)
+					{
+						trace('[UI] Failed to re-add blackOverlay: ' + Std.string(e));
+					}
+					FlxTween.tween(blackOverlay, {alpha: 1.0}, 1.0, (({
+						onComplete: function():Void
+						{
+							trace("Overlay faded to black, performing reset activities...");
+
+							// Now that the screen is fully black, hide the explosion sprite
+							// so it does not show through. Also freeze the player during
+							// the reset and subsequent fade back in.
+							try
+							{
+								if (shipExplosionSprite != null)
+								{
+									shipExplosionSprite.visible = false;
+									shipExplosionSprite.animation.stop();
+									shipExplosionSprite.animation.frameIndex = 0;
+								}
+							}
+							catch (e:Dynamic)
+							{
+								trace('[UI] Error hiding explosion sprite: ' + Std.string(e));
+							}
+							playerFrozen = true;
+
+							if (noteInventory != null)
+							{
+								noteInventory.reset();
+							}
+							if (notesLayer != null)
+							{
+								remove(notesLayer);
+								notesLayer.destroy();
+							}
+							notesLayer = new NotesLayer();
+							add(notesLayer);
+
+							if (gameplayManager != null)
+							{
+								var letterPuzzles = gameplayManager.getLetterPuzzles();
+								if (letterPuzzles != null && letterPuzzles.length > 0)
+								{
+									var availableNotes = [];
+									for (puzzle in letterPuzzles)
+									{
+										if (!noteInventory.hasNote(puzzle.data))
+										{
+											availableNotes.push(puzzle);
+										}
+									}
+									if (availableNotes.length > 0)
+									{
+										notesLayer.loadNotes(availableNotes);
+									}
+								}
+							}
+
+							if (player != null)
+							{
+								// If the current map didn't contain an explicit
+								// player-spawn point, try to fall back to a
+								// room-swap target that points back to the main
+								// room (common for multi-room ship maps). If we
+								// still don't have coordinates, leave the player
+								// at the parsed spawnX/spawnY.
+								if (!spawnFound)
+								{
+									// Try to find a roomSwap that points to the
+									// 'ship-main' room and use its target as the spawn
+									for (rs in roomSwapDataArr)
+									{
+										if (rs != null && rs.roomFilename != null && rs.roomFilename.indexOf("ship-main") >= 0)
+										{
+											spawnX = rs.targetX;
+											spawnY = rs.targetY;
+											trace("Fallback spawn from roomSwap -> (" + spawnX + ", " + spawnY + ") using roomFilename=" + rs.roomFilename);
+											break;
+										}
+									}
+									// If still not found, try loading ship-main.tmx directly and
+									// read its player-spawn metadata.
+									if (!spawnFound)
+									{
+										try
+										{
+											var mainMap = TmxSimple.load("assets/maps/ship-main.tmx", "assets/sprites/CC_shipSheet_001.png");
+											if (mainMap.objectGroups.exists("Metadata"))
+											{
+												var md = mainMap.objectGroups.get("Metadata");
+												for (mobj in md)
+												{
+													if (mobj.name == "player-spawn")
+													{
+														spawnX = mobj.x;
+														spawnY = mobj.y;
+														trace("Fallback spawn loaded from ship-main.tmx -> (" + spawnX + ", " + spawnY + ")");
+														break;
+													}
+												}
+											}
+										}
+										catch (e:Dynamic)
+										{
+											trace('[SPAWN] Error reading ship-main.tmx fallback: ' + Std.string(e));
+										}
+									}
+								}
+
+								player.x = spawnX;
+								player.y = spawnY;
+								// Also update cameraTarget to follow player's center immediately
+								try
+								{
+									if (cameraTarget != null)
+									{
+										cameraTarget.x = player.x + player.width / 2;
+										cameraTarget.y = player.y + player.height / 2 - cameraYOffset;
+									}
+								}
+								catch (e:Dynamic) {}
+							}
+
+							FlxTween.tween(blackOverlay, {alpha: 0.0}, 1.0, (({
+								onComplete: function():Void
+								{
+									trace("Fade back in complete; restarting music if available");
+									var musicId = MusicManager.getCurrent();
+									if (musicId != null)
+									{
+										MusicManager.play(musicId);
+									}
+
+									// restart evacuation timer sequence so the round resumes
+									try
+									{
+										if (gameplayManager != null)
+										{
+											gameplayManager.restartEvacuationSequence();
+										}
+										// Listen for the evacuation dialogue complete event and re-enable
+										// player movement when it finishes.
+										try
+										{
+											eventManager.on("evacuation_dialogue_complete", _ ->
+											{
+												if (player != null)
+													player.moves = true;
+											});
+										}
+										catch (e:Dynamic) {}
+										// hide the black overlay again to restore normal rendering order
+										if (blackOverlay != null)
+										{
+											blackOverlay.visible = false;
+											blackOverlay.alpha = 0;
+										}
+									}
+									catch (e:Dynamic)
+									{
+										trace('[UI] Error restarting evacuation sequence: ' + Std.string(e));
+									}
+								}
+							}) : Dynamic));
+						}
+					}) : Dynamic));
 				});
 			}
 		});
@@ -414,7 +813,7 @@ class GameState extends FlxState
 		var moveY = 0.0;
 
 		#if !android
-		if (!gameplayManager.isDialogueActive() && !dialogBox.isActive)
+		if (!gameplayManager.isDialogueActive() && !dialogBox.isActive && !playerFrozen)
 		{
 			if (FlxG.keys.pressed.X)
 			{
@@ -449,6 +848,12 @@ class GameState extends FlxState
 			}
 		}
 		#end
+
+		// If the player is frozen (explosion in progress), ensure movement is disabled
+		if (player != null && playerFrozen)
+		{
+			player.moves = false;
+		}
 
 		var hasMovementInput = isKeyPressed(controlBindings.moveLeft)
 			|| isKeyPressed(controlBindings.moveRight)
@@ -620,12 +1025,12 @@ class GameState extends FlxState
 
 				if (blackOverlay != null)
 				{
-					var fadeDuration:Float = 1.0;
+					var fadeDuration:Float = 3.0;
 					FlxTween.tween(blackOverlay, {alpha: 1}, fadeDuration);
 					var currentMusic = MusicManager.getCurrent();
 					if (currentMusic != null)
 					{
-						MusicManager.fadeOutAndStop(currentMusic, fadeDuration);
+						MusicManager.fadeToVolume(currentMusic, 0.05, fadeDuration);
 					}
 				}
 				dialogCooldown = 0.5;

@@ -96,11 +96,11 @@ class LoadingState extends FlxState
 
 			case 2:
 				updateStatus(Main.tongue.get("$LOADING_LD_ASSETS", "ui"));
-				MusicManager.load("intro", "assets/sounds/music.intro.wav", true);
-				MusicManager.load("intro.old", "assets/sounds/music.intro.old.wav", true);
-				MusicManager.load("geton", "assets/sounds/music.geton.wav", true);
-				MusicManager.load("firstencounter", "assets/sounds/music.firstencounter.wav", false);
-				MusicManager.load("roundone", "assets/sounds/music.roundone.wav", true);
+				MusicManager.load("intro", "assets/sounds/music.intro.mp3", true);
+				MusicManager.load("intro.old", "assets/sounds/music.intro.old.mp3", true);
+				MusicManager.load("geton", "assets/sounds/music.geton.mp3", true);
+				MusicManager.load("firstencounter", "assets/sounds/music.firstencounter.mp3", false);
+				MusicManager.load("roundone", "assets/sounds/music.roundone.mp3", true);
 
 				loadingStep++;
                 runNextStep();

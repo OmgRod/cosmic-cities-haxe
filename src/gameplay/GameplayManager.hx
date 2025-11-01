@@ -154,4 +154,14 @@ class GameplayManager
 			evacuationIntro.destroy();
 		}
 	}
+	public function restartEvacuationSequence():Void
+	{
+		if (evacuationIntro != null)
+		{
+			evacuationIntro.reset();
+			evacuationIntro.startAtDialogue();
+			currentSequence = "evacuation";
+			isSequencePlaying = true;
+		}
+	}
 }

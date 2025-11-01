@@ -154,17 +154,22 @@ class TmxSimple {
                 var content = StringTools.trim(getInnerText(dataNode));
                 var rows = content.split("\n");
                 var out = new StringBuf();
-                for (ry in 0...rows.length) {
-                    var row = StringTools.trim(rows[ry]);
-                    if (row.length == 0) {
-                        if (ry < rows.length - 1) out.add("\n");
-                        continue;
-                    }
-                    var vals = row.split(",");
-                    for (rx in 0...vals.length) {
-                        var vStr = StringTools.trim(vals[rx]);
-						if (vStr == "")
-							continue;
+				for (ry in 0...rows.length)
+				{
+					var row = StringTools.trim(rows[ry]);
+					if (row.length == 0)
+					{
+						if (ry < rows.length - 1)
+							out.add("\n");
+						continue;
+					}
+					var vals = row.split(",");
+					for (rx in 0...vals.length)
+					{
+						var vStr = StringTools.trim(vals[rx]);
+						// Treat empty entries (including trailing commas) as 0
+						if (vStr == "" || vStr == null)
+							vStr = "0";
 						if (vStr == "null")
 							vStr = "0";
 						var parsed = Std.parseInt(vStr);
@@ -175,17 +180,21 @@ class TmxSimple {
 						if (vString == "null")
 							vString = "0";
 						out.add(vString);
-                        if (rx < vals.length - 1) out.add(",");
-                    }
-                    if (ry < rows.length - 1) out.add("\n");
-                }
+						if (rx < vals.length - 1)
+							out.add(",");
+					}
+					if (ry < rows.length - 1)
+						out.add("\n");
+				}
                 csv = out.toString();
             }
 
             if (csv != null) {
 				trace("CSV PREVIEW: " + csv.substr(0, 500));
-                var tilemap = new FlxTilemap();
-                tilemap.loadMapFromCSV(csv, tilesetGraphic, tileW, tileH);
+				// Sanitize CSV: ensure numeric cells only and each row has expected columns
+				csv = sanitizeCSV(csv, mapW);
+				var tilemap = new FlxTilemap();
+				tilemap.loadMapFromCSV(csv, tilesetGraphic, tileW, tileH);
                 tilemap.immovable = true;
                 layers.push(tilemap);
             }
@@ -365,6 +374,56 @@ class TmxSimple {
 		trace("gridToCSV complete, result length=" + result.length + " (after trim)");
 		return result;
     }
+
+	// Ensure CSV is well-formed: only numeric tokens, and each row has exactly w columns.
+	static function sanitizeCSV(csv:String, w:Int):String
+	{
+		var rows = csv.split("\n");
+		var out = new StringBuf();
+		for (ry in 0...rows.length)
+		{
+			var row = StringTools.trim(rows[ry]);
+			if (row.length == 0)
+			{
+				// produce a blank row of zeros
+				for (x in 0...w)
+				{
+					out.add("0");
+					if (x < w - 1)
+						out.add(",");
+				}
+			}
+			else
+			{
+				var vals = row.split(",");
+				for (x in 0...w)
+				{
+					var token = "0";
+					if (x < vals.length)
+					{
+						var t = StringTools.trim(vals[x]);
+						if (t == null || t == "" || t == "null")
+							token = "0";
+						else
+						{
+							// keep numeric-looking tokens only
+							var parsed = Std.parseInt(t);
+							if (parsed == null)
+								token = "0";
+							else
+								token = Std.string(parsed);
+						}
+					}
+					out.add(token);
+					if (x < w - 1)
+						out.add(",");
+				}
+			}
+			if (ry < rows.length - 1)
+				out.add("\n");
+		}
+		return out.toString();
+	}
 
     
     

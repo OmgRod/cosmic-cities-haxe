@@ -77,6 +77,36 @@ class MusicManager
 		}) : Dynamic));
 	}
 
+	public static function fadeToVolume(id:String, target:Float, duration:Float):Void
+	{
+		var sound = sources.get(id);
+		if (sound == null)
+			return;
+
+		trace('[MUSIC] fadeToVolume start id='
+			+ id
+			+ ' from='
+			+ Std.string(sound.volume)
+			+ ' target='
+			+ Std.string(target)
+			+ ' dur='
+			+ Std.string(duration));
+		FlxTween.tween(sound, {volume: target}, duration, (({
+			onComplete: function():Void
+			{
+				// ensure final volume applied
+				sound.volume = target;
+				trace('[MUSIC] fadeToVolume complete id=' + id + ' finalVol=' + Std.string(sound.volume));
+				if (target <= 0.001)
+				{
+					sound.stop();
+					if (currentId == id)
+						currentId = null;
+				}
+			}
+		}) : Dynamic));
+	}
+
 	public static function pauseAll():Void
 	{
 		if (currentId != null)
