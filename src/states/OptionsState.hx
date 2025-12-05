@@ -143,8 +143,23 @@ class OptionsState extends FlxState
         {
             sliderKnob.x = Math.max(minX, Math.min(maxX, FlxG.mouse.x - sliderKnob.width / 2));
             var newVolume = (sliderKnob.x - minX) / (maxX - minX);
-            FlxG.sound.volume = newVolume;
-            MusicManager.setGlobalVolume(newVolume);
+            try
+            {
+                FlxG.sound.volume = newVolume;
+            }
+            catch (_:Dynamic)
+            {
+                // ignore failures setting engine volume
+            }
+            // guard MusicManager global update to avoid crashes from bad state
+            try
+            {
+                MusicManager.setGlobalVolume(newVolume);
+            }
+            catch (e:Dynamic)
+            {
+                trace('[OPTIONS] MusicManager.setGlobalVolume failed: ' + e);
+            }
             volumeText.text = Std.string(Math.round(newVolume * 100)) + "%";
         }
 		#end
