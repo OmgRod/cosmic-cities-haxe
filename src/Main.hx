@@ -8,6 +8,7 @@ import flixel.FlxGame;
 import flixel.text.FlxBitmapFont;
 import flixel.text.FlxBitmapText;
 import flixel.util.FlxColor;
+import gameplay.ChapterRegistry;
 import managers.ModLoader;
 import managers.ModManager;
 import openfl.display.Sprite;
@@ -69,6 +70,11 @@ class Main extends Sprite
 			__modMan.onModLoaded.add(function() tongue.reloadModLocales(localeToUse));
 			__modMan.onModUnloaded.add(function() tongue.reloadModLocales(localeToUse));
 			#end
+			
+			// Initialize chapter registry with default chapters
+			ChapterRegistry.initDefaults();
+			trace("Chapter registry initialized with " + ChapterRegistry.getAllIds().length + " chapters");
+			
 			FlxG.signals.postStateSwitch.add(setupEscapeQuitText);
 			addChild(new FlxGame(640, 480, LoadingState));
 

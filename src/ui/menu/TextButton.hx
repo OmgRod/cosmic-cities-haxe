@@ -65,4 +65,16 @@ class TextButton extends FlxGroup
 
     public function disableSound() playSound = false;
     public function enableSound() playSound = true;
+    
+    /**
+     * Update the button text
+     */
+    public function updateText(newText:String):Void
+    {
+        label.text = newText;
+        label.updateHitbox();
+        // Recenter the label
+        label.x = button.x + (button.width - label.frameWidth * label.scale.x) / 2;
+        label.y = button.y + (button.height - label.frameHeight * label.scale.y) / 2;
+    }
 }

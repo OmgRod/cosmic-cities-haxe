@@ -21,6 +21,8 @@ class OptionsState extends FlxState
     var dragging:Bool = false;
     var minX:Float;
     var maxX:Float;
+	var musicToggleButton:TextButton;
+	var useOldIntroMusic:Bool = false;
 
 	public static var returnState:Class<FlxState> = null;
 
@@ -30,6 +32,14 @@ class OptionsState extends FlxState
 
         var starfield = new Starfield();
         add(starfield);
+
+		// Play menu music based on user preference
+		var savedOptions = GameSaveManager.loadOptionsWithDefaults();
+		if (savedOptions.useOldIntroMusic == true) {
+			MusicManager.play("intro.old");
+		} else {
+			MusicManager.play("intro");
+		}
 
 		var fontString = Main.tongue.getFontData("pixel_operator", 16).name;
 		var font = new BMFont("assets/fonts/" + fontString + "/" + fontString + ".fnt", "assets/fonts/" + fontString + "/" + fontString + ".png").getFont();
@@ -83,7 +93,32 @@ class OptionsState extends FlxState
 		});
 		add(ctrlBtn);
 
-		var backBtnY:Float = ctrlBtnY + 50;
+		// Music toggle button
+		var savedOptions = GameSaveManager.loadOptionsWithDefaults();
+		useOldIntroMusic = savedOptions.useOldIntroMusic == true;
+		
+		var musicBtnY:Float = ctrlBtnY + 50;
+		var musicLabel = useOldIntroMusic ? "Menu Music: Old Intro" : "Menu Music: New Intro";
+		musicToggleButton = new TextButton((FlxG.width - 250) / 2, musicBtnY, musicLabel, font, 250, 40);
+		musicToggleButton.setCallback(() ->
+		{
+			useOldIntroMusic = !useOldIntroMusic;
+			var newLabel = useOldIntroMusic ? "Menu Music: Old Intro" : "Menu Music: New Intro";
+			musicToggleButton.updateText(newLabel);
+			saveCurrentOptions();
+			
+			// Switch music immediately
+			MusicManager.stop("intro");
+			MusicManager.stop("intro.old");
+			if (useOldIntroMusic) {
+				MusicManager.play("intro.old");
+			} else {
+				MusicManager.play("intro");
+			}
+		});
+		add(musicToggleButton);
+
+		var backBtnY:Float = musicBtnY + 50;
 		var backBtn = new TextButton((FlxG.width - 150) / 2, backBtnY, Main.tongue.get("$GENERAL_BACK", "ui"), font, 150, 40);
 		backBtn.setCallback(() ->
 		{
@@ -175,6 +210,10 @@ class OptionsState extends FlxState
 	{
 		var currentOptions = GameSaveManager.loadOptions();
 		var language = currentOptions != null ? currentOptions.language : "en-US";
-		GameSaveManager.saveOptions({language: language, volume: FlxG.sound.volume});
+		GameSaveManager.saveOptions({
+			language: language, 
+			volume: FlxG.sound.volume,
+			useOldIntroMusic: useOldIntroMusic
+		});
 	}
 }

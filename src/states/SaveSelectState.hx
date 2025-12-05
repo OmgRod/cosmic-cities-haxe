@@ -15,6 +15,9 @@ import utils.GameSaveManager;
 class SaveSelectState extends FlxState {
     var font:flixel.text.FlxBitmapFont;
 
+    // Static variables to track switching context
+    public static var isSwitchingSave:Bool = false;
+    public static var previousSaveSlot:Int = -1;
     
     var slotContainers:Array<FlxGroup> = [];
     var slotModes:Array<String> = []; 
@@ -37,6 +40,14 @@ class SaveSelectState extends FlxState {
 
         var starfield = new Starfield();
         add(starfield);
+
+        // Play menu music based on user preference
+        var savedOptions = GameSaveManager.loadOptionsWithDefaults();
+        if (savedOptions.useOldIntroMusic == true) {
+            managers.MusicManager.play("intro.old");
+        } else {
+            managers.MusicManager.play("intro");
+        }
 
         var fontString = Main.tongue.getFontData("pixel_operator", 16).name;
         font = new BMFont("assets/fonts/" + fontString + "/" + fontString + ".fnt", "assets/fonts/" + fontString + "/" + fontString + ".png").getFont();
@@ -62,13 +73,25 @@ class SaveSelectState extends FlxState {
             buildSlotView(i + 1, top + i * (slotHeight + gap), slotHeight);
         }
 
-        
-        var backW = 140; var backH = 38;
-        var backX = (FlxG.width - backW) / 2;
-		var backY = FlxG.height - backH - 30;
-        var backBtn = new TextButton(backX, backY, Main.tongue.get("$GENERAL_BACK", "ui"), font, backW, backH);
-        backBtn.setCallback(() -> FlxG.switchState(() -> new MainMenuState()));
-        add(backBtn);
+        // Only show back button if switching saves (not on initial startup)
+        if (isSwitchingSave) {
+            var backW = 140; var backH = 38;
+            var backX = (FlxG.width - backW) / 2;
+            var backY = FlxG.height - backH - 30;
+            var backBtn = new TextButton(backX, backY, Main.tongue.get("$GENERAL_BACK", "ui"), font, backW, backH);
+            backBtn.setCallback(() -> {
+                // Restore previous save slot
+                if (previousSaveSlot > 0) {
+                    var previousData = GameSaveManager.loadData(previousSaveSlot);
+                    if (previousData != null) {
+                        GameSaveManager.setCurrent(previousSaveSlot, previousData);
+                    }
+                }
+                isSwitchingSave = false;
+                FlxG.switchState(() -> new MainMenuState());
+            });
+            add(backBtn);
+        }
     }
 
     function clearGroup(g:FlxGroup) {
@@ -200,7 +223,7 @@ class SaveSelectState extends FlxState {
             var d = GameSaveManager.loadData(slot);
             if (d == null) d = { username: username, playTimeSeconds: 0 };
             GameSaveManager.setCurrent(slot, d);
-			FlxG.switchState(() -> new LevelSelectState());
+			FlxG.switchState(() -> new MainMenuState());
         });
         add(contBtn); g.add(contBtn);
 

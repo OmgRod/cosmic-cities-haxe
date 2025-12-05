@@ -5,11 +5,16 @@ import flixel.sound.FlxSound;
 import flixel.tweens.FlxTween;
 import haxe.ds.StringMap;
 import haxe.Timer;
+import openfl.Assets;
+import openfl.media.Sound;
+import openfl.media.SoundChannel;
+import openfl.events.Event;
+import openfl.events.IOErrorEvent;
 
 class MusicManager
 {
-	// maps id -> FlxSound
-	static var sources:StringMap<FlxSound> = new StringMap();
+	// maps id -> SoundChannel for direct playback
+	static var soundChannels:StringMap<SoundChannel> = new StringMap();
 	// keep original file paths and loop flags for fallback
 	static var paths:StringMap<String> = new StringMap();
 	static var loops:StringMap<Bool> = new StringMap();
@@ -20,58 +25,10 @@ class MusicManager
 	{
 		try
 		{
-			if (sources.exists(id))
-			{
-				var old = sources.get(id);
-				if (old != null)
-				{
-					try {
-						old.stop();
-					} catch (_:Dynamic) {}
-					sources.remove(id);
-				}
-			}
-
-			var sound = new FlxSound();
-			// store path/loop for fallback
+			// Just store the path and loop flag - we'll load on-demand when playing
 			paths.set(id, filepath);
 			loops.set(id, loop);
-
-			try
-			{
-				sound.loadStream(filepath, loop);
-			}
-			catch (e:Dynamic)
-			{
-				trace('[MUSIC] loadStream failed for ' + filepath + ' : ' + e);
-			}
-
-			// set initial volume to global volume if available
-			try
-			{
-				if (FlxG != null && FlxG.sound != null)
-					sound.volume = FlxG.sound.volume;
-			}
-			catch (_:Dynamic) {}
-
-			// try to register with FlxG's sound manager so it isn't auto-destroyed unexpectedly
-			try
-			{
-				if (FlxG != null && FlxG.sound != null && FlxG.sound.list != null)
-				{
-					// FlxTypedGroup uses add() rather than push()
-					FlxG.sound.list.add(sound);
-					// prevent engine auto-destroying our streaming music
-					sound.autoDestroy = false;
-				}
-			}
-			catch (_:Dynamic)
-			{
-				// ignore registration failure
-			}
-
-			sources.set(id, sound);
-			trace('[MUSIC] loaded id=' + id + ' path=' + filepath + ' loop=' + Std.string(loop));
+			trace('[MUSIC] registered id=' + id + ' path=' + filepath + ' loop=' + Std.string(loop));
 		}
 		catch (e:Dynamic)
 		{
@@ -81,72 +38,85 @@ class MusicManager
 
 	public static function play(id:String):Bool
 	{
-		var sound:FlxSound = null;
 		try
 		{
-			sound = sources.get(id);
-		}
-		catch (_:Dynamic) { }
-
-		if (sound == null)
-		{
-			// fallback: try FlxG.sound.play with stored path
+			// Get the path and loop flag
 			var p:String = paths.exists(id) ? paths.get(id) : null;
 			var lp:Bool = loops.exists(id) ? loops.get(id) : false;
-			if (p != null && FlxG != null && FlxG.sound != null)
+			
+			if (p == null)
 			{
-				try
-				{
-					var fb = FlxG.sound.play(p, FlxG.sound.volume, lp);
-					trace('[MUSIC] fallback FlxG.sound.play for id=' + id + ' returned=' + Std.string(fb != null));
-					if (fb != null) currentId = id;
-					return fb != null;
-				}
-				catch (e:Dynamic)
-				{
-					trace('[MUSIC] fallback play failed for id=' + id + ' : ' + e);
-					return false;
-				}
+				trace('[MUSIC] play failed - id not registered: ' + id);
+				return false;
 			}
-			return false;
-		}
 
-			try
+			// If already playing this track, keep it running (avoid restart on state change)
+			var existing = soundChannels.get(id);
+			if (currentId == id && existing != null)
 			{
-				currentId = id;
-				var started = false;
-				try {
-					started = (sound.play() != null);
-				} catch (_:Dynamic) {
-					try {
-						sound.play();
-						started = true;
-					} catch (_:Dynamic) {
-						started = false;
-					}
-				}
-				if (!started)
-				{
-					// schedule a few retries to account for async stream startup on some platforms
-					Timer.delay(function() {
-						try {
-							sound.play();
-						} catch (_:Dynamic) {}
-					}, 100);
-					Timer.delay(function() {
-						try {
-							sound.play();
-						} catch (_:Dynamic) {}
-					}, 300);
-					Timer.delay(function() {
-						try {
-							sound.play();
-						} catch (_:Dynamic) {}
-					}, 700);
-				}
-				trace('[MUSIC] play requested id=' + id + ' started=' + Std.string(started));
+				// Refresh volume in case settings changed
+				var transform = existing.soundTransform;
+				transform.volume = FlxG.sound.volume;
+				existing.soundTransform = transform;
+				trace('[MUSIC] already playing, skipping restart: id=' + id);
 				return true;
 			}
+
+			// Load music using Assets.getMusic (for streaming music files)
+			trace('[MUSIC] loading music: id=' + id + ' path=' + p + ' loop=' + lp);
+			trace('[MUSIC] FlxG.sound.volume=' + FlxG.sound.volume + ' muted=' + FlxG.sound.muted);
+			
+			var sound:Sound = null;
+			
+			try {
+				// Use Assets.getMusic for music files (supports streaming)
+				sound = Assets.getMusic(p);
+				if (sound == null) {
+					trace('[MUSIC] ERROR: Assets.getMusic returned null');
+					return false;
+				}
+				
+				// Add event listeners for debugging
+				sound.addEventListener(Event.COMPLETE, function(e:Event) {
+					trace('[MUSIC] Sound COMPLETE event: ' + id);
+				});
+				sound.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent) {
+					trace('[MUSIC] Sound IO_ERROR: ' + id + ' - ' + e.text);
+				});
+			}
+			catch (e:Dynamic) {
+				trace('[MUSIC] ERROR loading assets: ' + e);
+				return false;
+			}
+			
+			// Stop current channel only when switching tracks
+			var currentChannel = soundChannels.get(currentId);
+			if (currentId != null && currentId != id && currentChannel != null) {
+				trace('[MUSIC] stopping current channel: ' + currentId);
+				currentChannel.stop();
+				soundChannels.remove(currentId);
+			}
+			
+			// Play sound directly using Sound.play()
+			trace('[MUSIC] calling sound.play() with volume=' + FlxG.sound.volume);
+			var channel:SoundChannel = sound.play(0, lp ? 999999 : 0, null);
+			
+			if (channel != null) {
+				soundChannels.set(id, channel);
+				currentId = id;
+				// Set volume on the channel
+				var transform = channel.soundTransform;
+				transform.volume = FlxG.sound.volume;
+				channel.soundTransform = transform;
+				trace('[MUSIC] ✓ Started playing via SoundChannel: id=' + id);
+				return true;
+			}
+			else
+			{
+				trace('[MUSIC] ERROR: sound.play() returned null');
+				return false;
+			}
+		}
 		catch (e:Dynamic)
 		{
 			trace('[MUSIC] play exception for id=' + id + ' : ' + e);
@@ -158,13 +128,16 @@ class MusicManager
 	{
 		try
 		{
-			var sound = sources.get(id);
-			if (sound != null)
+			if (currentId == id)
 			{
-				try {
-					sound.stop();
-				} catch (_:Dynamic) {}
-				if (currentId == id) currentId = null;
+				var ch = soundChannels.get(id);
+				if (ch != null)
+				{
+					ch.stop();
+					soundChannels.remove(id);
+				}
+				currentId = null;
+				trace('[MUSIC] stopped id=' + id);
 			}
 		}
 		catch (_:Dynamic) {}
@@ -174,9 +147,16 @@ class MusicManager
 	{
 		try
 		{
-			var sound = sources.get(id);
-			if (sound != null && sound.playing)
-				sound.pause();
+			if (currentId == id)
+			{
+				var ch = soundChannels.get(id);
+				if (ch != null)
+				{
+					ch.stop();
+					soundChannels.remove(id);
+					trace('[MUSIC] paused id=' + id);
+				}
+			}
 		}
 		catch (_:Dynamic) {}
 	}
@@ -185,53 +165,71 @@ class MusicManager
 	{
 		try
 		{
-			var sound = sources.get(id);
-			if (sound != null && !sound.playing)
-				sound.play();
+			if (currentId == id)
+			{
+				// Simply replay using play(), which will re-register the channel
+				play(id);
+				trace('[MUSIC] resumed id=' + id);
+			}
 		}
 		catch (_:Dynamic) {}
 	}
 
 	public static function fadeOutAndStop(id:String, duration:Float):Void
 	{
-		var sound = sources.get(id);
-		if (sound == null) return;
+		if (currentId != id) return;
 
-		FlxTween.tween(sound, {volume: 0.0}, duration, (({
-			onComplete: function():Void
+		var ch = soundChannels.get(id);
+		if (ch == null) return;
+
+		var transform = ch.soundTransform;
+		var startVol = transform.volume;
+		FlxTween.num(startVol, 0.0, duration, {
+			onUpdate: function(t:FlxTween)
 			{
-				try {
-					sound.stop();
-				} catch (_:Dynamic) {}
+				var v = startVol + (0.0 - startVol) * t.percent;
+				transform.volume = v;
+				ch.soundTransform = transform;
+			},
+			onComplete: function(t:FlxTween)
+			{
+				try { ch.stop(); } catch (_:Dynamic) {}
+				soundChannels.remove(id);
 				if (currentId == id) currentId = null;
 			}
-		}) : Dynamic));
+		});
 	}
 
 	public static function fadeToVolume(id:String, target:Float, duration:Float):Void
 	{
-		var sound = sources.get(id);
-		if (sound == null) return;
+		if (currentId != id) return;
+
+		var ch = soundChannels.get(id);
+		if (ch == null) return;
 
 		try
 		{
-			trace('[MUSIC] fadeToVolume start id=' + id + ' from=' + Std.string(sound.volume) + ' target=' + Std.string(target) + ' dur=' + Std.string(duration));
-			FlxTween.tween(sound, {volume: target}, duration, (({
-				onComplete: function():Void
+			var transform = ch.soundTransform;
+			var startVol = transform.volume;
+			FlxTween.num(startVol, target, duration, {
+				onUpdate: function(t:FlxTween)
 				{
-					try {
-						sound.volume = target;
-					} catch (_:Dynamic) {}
-					trace('[MUSIC] fadeToVolume complete id=' + id + ' finalVol=' + Std.string(sound.volume));
+					var v = startVol + (target - startVol) * t.percent;
+					transform.volume = v;
+					ch.soundTransform = transform;
+				},
+				onComplete: function(t:FlxTween)
+				{
+					transform.volume = target;
+					ch.soundTransform = transform;
 					if (target <= 0.001)
 					{
-						try {
-							sound.stop();
-						} catch (_:Dynamic) {}
+						try { ch.stop(); } catch (_:Dynamic) {}
+						soundChannels.remove(id);
 						if (currentId == id) currentId = null;
 					}
 				}
-			}) : Dynamic));
+			});
 		}
 		catch (e:Dynamic)
 		{
@@ -241,29 +239,28 @@ class MusicManager
 
 	public static function pauseAll():Void
 	{
-		if (currentId != null)
-		{
-			var sound = sources.get(currentId);
-			if (sound != null && sound.playing)
+		try {
+			for (id in soundChannels.keys())
 			{
-				try {
-					sound.pause();
-				} catch (_:Dynamic) {}
+				var ch = soundChannels.get(id);
+				if (ch != null)
+				{
+					ch.stop();
+				}
 			}
-		}
+			soundChannels = new StringMap();
+			if (currentId != null) trace('[MUSIC] paused all');
+		} catch (_:Dynamic) {}
 	}
 
 	public static function resumeAll():Void
 	{
 		if (currentId != null)
 		{
-			var sound = sources.get(currentId);
-			if (sound != null && !sound.playing)
-			{
-				try {
-					sound.play();
-				} catch (_:Dynamic) {}
-			}
+			try {
+				play(currentId);
+				trace('[MUSIC] resumed all');
+			} catch (_:Dynamic) {}
 		}
 	}
 
@@ -271,8 +268,7 @@ class MusicManager
 	{
 		try
 		{
-			var sound = sources.get(id);
-			return sound != null && sound.playing;
+			return currentId == id && soundChannels.exists(id);
 		}
 		catch (_:Dynamic)
 		{
@@ -300,12 +296,16 @@ class MusicManager
 				} catch (_:Dynamic) {}
 			}
 
-			for (id in sources.keys())
+			for (id in soundChannels.keys())
 			{
 				try
 				{
-					var snd = sources.get(id);
-					if (snd != null) snd.volume = vol;
+					var channel = soundChannels.get(id);
+					if (channel != null) {
+						var transform = channel.soundTransform;
+						transform.volume = vol;
+						channel.soundTransform = transform;
+					}
 				}
 				catch (_:Dynamic) {}
 			}

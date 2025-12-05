@@ -18,6 +18,7 @@ typedef OptionsData =
 {
 	var language:String;
 	var volume:Float;
+	var ?useOldIntroMusic:Bool;
 	var ?controls:ControlsData;
 }
 
@@ -266,11 +267,15 @@ class GameSaveManager {
 				var parsed:Dynamic = Json.parse(json);
 				if (parsed != null && parsed.language != null && parsed.volume != null)
 				{
-					var options:OptionsData = {language: parsed.language, volume: parsed.volume};
+					var options:OptionsData = {
+						language: parsed.language,
+						volume: parsed.volume,
+						useOldIntroMusic: parsed.useOldIntroMusic == true
+					};
 					if (parsed.controls != null)
 						options.controls = parsed.controls;
-					trace("Options loaded from file: language=" + options.language + " volume=" + options.volume + " controls="
-						+ (options.controls != null ? "yes" : "no"));
+					trace("Options loaded from file: language=" + options.language + " volume=" + options.volume + " useOldIntroMusic="
+						+ options.useOldIntroMusic + " controls=" + (options.controls != null ? "yes" : "no"));
 					return options;
 				}
 			}
@@ -289,11 +294,15 @@ class GameSaveManager {
 				var parsed:Dynamic = Json.parse(json);
 				if (parsed != null && parsed.language != null && parsed.volume != null)
 				{
-					var options:OptionsData = {language: parsed.language, volume: parsed.volume};
+					var options:OptionsData = {
+						language: parsed.language,
+						volume: parsed.volume,
+						useOldIntroMusic: parsed.useOldIntroMusic == true
+					};
 					if (parsed.controls != null)
 						options.controls = parsed.controls;
-					trace("Options loaded from localStorage: language=" + options.language + " volume=" + options.volume + " controls="
-						+ (options.controls != null ? "yes" : "no"));
+					trace("Options loaded from localStorage: language=" + options.language + " volume=" + options.volume
+						+ " useOldIntroMusic=" + options.useOldIntroMusic + " controls=" + (options.controls != null ? "yes" : "no"));
 					return options;
 				}
 			}
@@ -312,10 +321,14 @@ class GameSaveManager {
 		var options = loadOptions();
 		if (options != null)
 		{
+			// Ensure useOldIntroMusic has a default if not set
+			if (options.useOldIntroMusic == null) {
+				options.useOldIntroMusic = false;
+			}
 			return options;
 		}
-		var defaults:OptionsData = {language: "en-US", volume: 1.0};
-		trace("Using default options: language=" + defaults.language + " volume=" + defaults.volume);
+		var defaults:OptionsData = {language: "en-US", volume: 1.0, useOldIntroMusic: false};
+		trace("Using default options: language=" + defaults.language + " volume=" + defaults.volume + " useOldIntroMusic=" + defaults.useOldIntroMusic);
 		return defaults;
 	}
 

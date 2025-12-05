@@ -96,11 +96,11 @@ class LoadingState extends FlxState
 
 			case 2:
 				updateStatus(Main.tongue.get("$LOADING_LD_ASSETS", "ui"));
-				MusicManager.load("intro", "assets/sounds/music.intro.mp3", true);
-				MusicManager.load("intro.old", "assets/sounds/music.intro.old.mp3", true);
-				MusicManager.load("geton", "assets/sounds/music.geton.mp3", true);
-				MusicManager.load("firstencounter", "assets/sounds/music.firstencounter.mp3", false);
-				MusicManager.load("roundone", "assets/sounds/music.roundone.mp3", true);
+                MusicManager.load("intro", "assets/sounds/music.intro.ogg", true);
+                MusicManager.load("intro.old", "assets/sounds/music.intro.old.ogg", true);
+                MusicManager.load("geton", "assets/sounds/music.geton.ogg", true);
+                MusicManager.load("firstencounter", "assets/sounds/music.firstencounter.ogg", false);
+                MusicManager.load("roundone", "assets/sounds/music.roundone.ogg", true);
 
 				loadingStep++;
                 runNextStep();
@@ -108,7 +108,9 @@ class LoadingState extends FlxState
 			case 3: 
 				updateStatus(Main.tongue.get("$LOADING_DONE", "ui"));
                 progressBar.value = 4;
-				FlxG.switchState(() -> new MainMenuState());
+				// Initial startup - not switching saves
+				SaveSelectState.isSwitchingSave = false;
+				FlxG.switchState(() -> new SaveSelectState());
         }
 
         progressBar.value = loadingStep;

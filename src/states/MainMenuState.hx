@@ -39,7 +39,13 @@ class MainMenuState extends FlxState
 		ModHooks.run(ModHookEvents.MAINMENU_CREATE_PRE, new ModHookContext(this));
 
 		buttonCallbacks = new Map();
-		buttonCallbacks.set("start", () -> FlxG.switchState(() -> new SaveSelectState()));
+		buttonCallbacks.set("play", () -> FlxG.switchState(() -> new LevelSelectState()));
+		buttonCallbacks.set("switchSave", () -> {
+			// Set flag and store current save slot before switching
+			SaveSelectState.isSwitchingSave = true;
+			SaveSelectState.previousSaveSlot = utils.GameSaveManager.currentSlot;
+			FlxG.switchState(() -> new SaveSelectState());
+		});
 		buttonCallbacks.set("options", () -> FlxG.switchState(() -> new OptionsState()));
 		#if desktop
 		buttonCallbacks.set("mods", () -> FlxG.switchState(() -> new ModsState()));
@@ -53,7 +59,13 @@ class MainMenuState extends FlxState
 		var starfield = new Starfield();
 		add(starfield);
 
-		MusicManager.play("intro");
+		// Play menu music based on user preference
+		var savedOptions = utils.GameSaveManager.loadOptionsWithDefaults();
+		if (savedOptions.useOldIntroMusic == true) {
+			MusicManager.play("intro.old");
+		} else {
+			MusicManager.play("intro");
+		}
 
 		var vw = FlxG.width;
 		var vh = FlxG.height;
@@ -83,7 +95,8 @@ class MainMenuState extends FlxState
 		add(buttonGroup);
 
 		var buttons = [
-			{id: "start", label: Main.tongue.get("$MENU_START_BUTTON", "ui")},
+			{id: "play", label: Main.tongue.get("$MENU_START_BUTTON", "ui")},
+			{id: "switchSave", label: "Switch Save"},
 			{id: "options", label: Main.tongue.get("$MENU_OPTIONS_BUTTON", "ui")},
 			#if desktop
 			{id: "mods", label: "Mods"},
@@ -148,7 +161,6 @@ class MainMenuState extends FlxState
 	override public function destroy():Void
 	{
 		ModHooks.run(ModHookEvents.MAINMENU_DESTROY_PRE, new ModHookContext(this));
-		MusicManager.stop("intro");
 		
 		super.destroy();
 		ModHooks.run(ModHookEvents.MAINMENU_DESTROY_POST, new ModHookContext(this));
